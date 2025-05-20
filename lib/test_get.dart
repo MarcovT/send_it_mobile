@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 class VideoFetcher extends StatefulWidget {
+  const VideoFetcher({super.key});
+
   @override
-  _VideoFetcherState createState() => _VideoFetcherState();
+  State<VideoFetcher> createState() => _VideoFetcherState();
 }
 
 class _VideoFetcherState extends State<VideoFetcher> {

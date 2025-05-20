@@ -4,8 +4,10 @@ import 'dart:convert';
 import 'package:file_picker/file_picker.dart';
 
 class ClubPoster extends StatefulWidget {
+  const ClubPoster({super.key});
+
   @override
-  _ClubPosterState createState() => _ClubPosterState();
+  State<ClubPoster> createState() => _ClubPosterState();
 }
 
 class _ClubPosterState extends State<ClubPoster> {
