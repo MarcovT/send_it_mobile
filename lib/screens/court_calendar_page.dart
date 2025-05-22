@@ -42,118 +42,136 @@ class _CourtCalendarPageState extends State<CourtCalendarPage> {
       appBar: AppBar(
         title: Text(widget.court.name),
       ),
-      body: Column(
-        children: [
-          // Calendar
-          Card(
-            margin: const EdgeInsets.all(8.0),
-            child: TableCalendar(
-              firstDay: DateTime.utc(2023, 1, 1),
-              lastDay: DateTime.utc(2025, 12, 31),
-              focusedDay: _focusedDay,
-              calendarFormat: _calendarFormat,
-              selectedDayPredicate: (day) {
-                return isSameDay(_selectedDay, day);
-              },
-              onDaySelected: (selectedDay, focusedDay) {
-                setState(() {
-                  _selectedDay = selectedDay;
-                  _focusedDay = focusedDay;
-                  _selectedTimeSlot = null;
-                  _videos = [];
-                });
-              },
-              onFormatChanged: (format) {
-                setState(() {
-                  _calendarFormat = format;
-                });
-              },
-            ),
+      body: SingleChildScrollView(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            minHeight: MediaQuery.of(context).size.height - AppBar().preferredSize.height - MediaQuery.of(context).padding.top,
           ),
-          // Date display
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Text(
-              'Selected Date: ${DateFormat('EEEE, MMMM d, yyyy').format(_selectedDay)}',
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Calendar
+              Card(
+                margin: const EdgeInsets.all(8.0),
+                child: TableCalendar(
+                  firstDay: DateTime.utc(2023, 1, 1),
+                  lastDay: DateTime.utc(2025, 12, 31),
+                  focusedDay: _focusedDay,
+                  calendarFormat: _calendarFormat,
+                  selectedDayPredicate: (day) {
+                    return isSameDay(_selectedDay, day);
+                  },
+                  onDaySelected: (selectedDay, focusedDay) {
+                    setState(() {
+                      _selectedDay = selectedDay;
+                      _focusedDay = focusedDay;
+                      _selectedTimeSlot = null;
+                      _videos = [];
+                    });
+                  },
+                  onFormatChanged: (format) {
+                    setState(() {
+                      _calendarFormat = format;
+                    });
+                  },
+                ),
               ),
-            ),
-          ),
-          // Time slot selector
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16.0),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                'Select Time Slot:',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-            ),
-          ),
-          const SizedBox(height: 8),
-          // Time slots horizontal list
-          SizedBox(
-            height: 60,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: _timeSlots.length,
-              itemBuilder: (context, index) {
-                final timeSlot = _timeSlots[index];
-                final isSelected = timeSlot == _selectedTimeSlot;
-                
-                return Padding(
-                  padding: const EdgeInsets.only(right: 8.0),
-                  child: ChoiceChip(
-                    label: Text(timeSlot),
-                    selected: isSelected,
-                    onSelected: (selected) {
-                      setState(() {
-                        _selectedTimeSlot = selected ? timeSlot : null;
-                        if (selected) {
-                          _fetchVideos(_selectedDay, timeSlot);
-                        } else {
-                          _videos = [];
-                        }
-                      });
-                    },
+              // Date display
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Text(
+                  'Selected Date: ${DateFormat('EEEE, MMMM d, yyyy').format(_selectedDay)}',
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
                   ),
-                );
-              },
-            ),
+                ),
+              ),
+              // Time slot selector
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16.0),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Select Time Slot:',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              // Time slots horizontal list
+              // Create a court list item for each time slot
+              SizedBox(
+                height: 60,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemCount: _timeSlots.length,
+                  itemBuilder: (context, index) {
+                    final timeSlot = _timeSlots[index];
+                    final isSelected = timeSlot == _selectedTimeSlot;
+                    
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 8.0),
+                      child: ChoiceChip(
+                        label: Text(timeSlot),
+                        selected: isSelected,
+                        onSelected: (selected) {
+                          setState(() {
+                            _selectedTimeSlot = selected ? timeSlot : null;
+                            if (selected) {
+                              _fetchVideos(_selectedDay, timeSlot);
+                            } else {
+                              _videos = [];
+                            }
+                          });
+                        },
+                      ),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 16),
+              // Videos section
+              _buildVideosSection(),
+            ],
           ),
-          const SizedBox(height: 16),
-          // Videos section
-          Expanded(
-            child: _buildVideosSection(),
-          ),
-        ],
+        ),
       ),
     );
   }
 
   Widget _buildVideosSection() {
     if (_selectedTimeSlot == null) {
-      return const Center(
-        child: Text('Select a time slot to view videos'),
+      return const SizedBox(
+        height: 200,
+        child: Center(
+          child: Text('Select a time slot to view videos'),
+        ),
       );
     }
 
     if (_isLoadingVideos) {
-      return const Center(
-        child: CircularProgressIndicator(),
+      return const SizedBox(
+        height: 200,
+        child: Center(
+          child: CircularProgressIndicator(),
+        ),
       );
     }
 
     if (_videos.isEmpty) {
-      return const Center(
-        child: Text('No videos available for the selected time'),
+      return const SizedBox(
+        height: 200,
+        child: Center(
+          child: Text('No videos available for the selected time'),
+        ),
       );
     }
 
     return ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
       padding: const EdgeInsets.all(16),
       itemCount: _videos.length,
       itemBuilder: (context, index) {
@@ -165,7 +183,7 @@ class _CourtCalendarPageState extends State<CourtCalendarPage> {
           selectedTimeSlot: _selectedTimeSlot!,
           onTap: () {
             // Open video player
-            // In a real app, this would navigate to a video player, was thinking of using the cool video_editor_2? 
+            // In a real app, this would navigate to a video player, was thinking of using the cool video_editor_2?
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text('Playing video: ${video.title}'),
@@ -185,42 +203,34 @@ class _CourtCalendarPageState extends State<CourtCalendarPage> {
 
     try {
       // Simulate API call to get videos
-      // In a real app, we would replace this with an actual API call to your backend
       await Future.delayed(const Duration(seconds: 1));
       
-      // Parse the timeSlot to get the start hour (e.g., "9:00 - 10:00" -> 9) @Marco I actually don't know how to do this or if this is even correct method. 
+      // Parse the timeSlot to get the start hour
       final startHour = int.parse(timeSlot.split(':')[0]);
       
       // Format the date for the API request
       final formattedDate = DateFormat('yyyy-MM-dd').format(date);
-      
-      // API call to fetch videos copied the below code ;)
-      // final response = await http.get(
-      //   Uri.parse('https://blahblahbalh.com'),
-      // );
-      // final data = jsonDecode(response.body);
-      // final List<VideoData> videos = (data['videos'] as List).map((v) => VideoData.fromJson(v)).toList(); 
       
       // Mock data for demonstration
       final List<VideoData> mockVideos = [
         VideoData(
           id: '1',
           title: 'Court ${widget.court.id}',
-          thumbnailUrl: 'https://via.placeholder.com/640x360',
+          thumbnailUrl: '',
           videoUrl: 'https://example.com/video1.mp4',
           duration: '45:22',
         ),
         VideoData(
           id: '2',
           title: 'Court ${widget.court.id}',
-          thumbnailUrl: 'https://via.placeholder.com/640x360',
+          thumbnailUrl: '',
           videoUrl: 'https://example.com/video2.mp4',
           duration: '32:15',
         ),
         VideoData(
           id: '3',
           title: 'Court ${widget.court.id}',
-          thumbnailUrl: 'https://via.placeholder.com/640x360',
+          thumbnailUrl: '',
           videoUrl: 'https://example.com/video3.mp4',
           duration: '58:40',
         ),
