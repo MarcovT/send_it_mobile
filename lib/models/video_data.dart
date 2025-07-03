@@ -4,6 +4,10 @@ class VideoData {
   final String thumbnailUrl;
   final String videoUrl;
   final String duration;
+  final String courtId;
+  final String description;
+  final dynamic sponsors;
+  final String tags;
 
   VideoData({
     required this.id,
@@ -11,5 +15,9 @@ class VideoData {
     required this.thumbnailUrl,
     required this.videoUrl,
     required this.duration,
+    required this.courtId,
+    required this.description,
+    required this.sponsors,
+    required this.tags,
   });
 }

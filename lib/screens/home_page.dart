@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
-import '../models/court.dart';
-import '../widgets/court_list_item.dart';
-import 'court_calendar_page.dart';
+import 'package:send_it_mobile/services/api_service.dart';
+import '../models/clubs.dart';
+import '../widgets/club_list_item.dart';
+import 'court_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -15,24 +16,25 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   bool _isLoading = true;
   Position? _currentPosition;
-  List<Court> _nearbyCourts = [];
+  List<Club> _nearbyClubs = [];
+  List<Club> _allClubs = [];
   String _errorMessage = '';
+  bool _showNearbyOnly = true; // Toggle state
 
   @override
   void initState() {
     super.initState();
-    _fetchNearbyCourts();
+    _initializeLocation();
   }
 
-  // Get current location and fetch nearby courts
-  // Code to get nearby courts using GPS location. I don't know if this will work! 
-  /*
-Future<void> _determinePosition() async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = '';
-    });
+  // Initialize location and fetch clubs
+  Future<void> _initializeLocation() async {
+    await _determinePosition();
+    await _fetchClubs();
+  }
 
+  // Get current location
+  Future<void> _determinePosition() async {
     bool serviceEnabled;
     LocationPermission permission;
 
@@ -40,10 +42,20 @@ Future<void> _determinePosition() async {
       // Test if location services are enabled
       serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
-        setState(() {
-          _isLoading = false;
-          _errorMessage = 'Location services are disabled. Please enable them.';
-        });
+        // Location services are not enabled, use default location
+        print('Location services are disabled, using default location');
+        _currentPosition = Position(
+          latitude: -28.749965,
+          longitude: 24.740717,
+          timestamp: DateTime.now(),
+          accuracy: 0,
+          altitude: 0,
+          heading: 0,
+          speed: 0,
+          speedAccuracy: 0,
+          altitudeAccuracy: 0,
+          headingAccuracy: 0,
+        );
         return;
       }
 
@@ -51,104 +63,158 @@ Future<void> _determinePosition() async {
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
         if (permission == LocationPermission.denied) {
-          setState(() {
-            _isLoading = false;
-            _errorMessage = 'Location permissions are denied.';
-          });
+          // Permissions are denied, use default location
+          print('Location permissions are denied, using default location');
+          _currentPosition = Position(
+            latitude: -28.749965,
+            longitude: 24.740717,
+            timestamp: DateTime.now(),
+            accuracy: 0,
+            altitude: 0,
+            heading: 0,
+            speed: 0,
+            speedAccuracy: 0,
+            altitudeAccuracy: 0,
+            headingAccuracy: 0,
+          );
           return;
         }
       }
 
       if (permission == LocationPermission.deniedForever) {
-        setState(() {
-          _isLoading = false;
-          _errorMessage = 'Location permissions are permanently denied.';
-        });
+        // Permissions are denied forever, use default location
+        print('Location permissions are permanently denied, using default location');
+        _currentPosition = Position(
+          latitude: -28.749965,
+          longitude: 24.740717,
+          timestamp: DateTime.now(),
+          accuracy: 0,
+          altitude: 0,
+          heading: 0,
+          speed: 0,
+          speedAccuracy: 0,
+          altitudeAccuracy: 0,
+          headingAccuracy: 0,
+        );
         return;
       }
 
       // Get the current position
       Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+          distanceFilter: 10,
+        ),
       );
 
       setState(() {
         _currentPosition = position;
       });
+      
+      print('Location obtained: ${position.latitude}, ${position.longitude}');
+    } catch (e) {
+      print('Error determining position: $e, using default location');
+      // Use default location if there's an error
+      _currentPosition = Position(
+        latitude: -28.749965,
+        longitude: 24.740717,
+        timestamp: DateTime.now(),
+        accuracy: 0,
+        altitude: 0,
+        heading: 0,
+        speed: 0,
+        speedAccuracy: 0,
+        altitudeAccuracy: 0,
+        headingAccuracy: 0,
+      );
+    }
+  }
 
-      // Once we have the position, fetch nearby courts
-      await _fetchNearbyCourts();
+  // Fetch clubs from API based on toggle state
+  Future<void> _fetchClubs() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = '';
+    });
+
+    try {
+      if (_showNearbyOnly) {
+        // Use current position if available, otherwise use default
+        final latitude = _currentPosition?.latitude ?? -28.749965;
+        final longitude = _currentPosition?.longitude ?? 24.740717;
+        
+        print('Fetching nearby clubs with location: $latitude, $longitude');
+        
+        // Fetch nearby clubs with location
+        final clubs = await ApiService.fetchNearbyClubsAll(latitude, longitude);
+        setState(() {
+          _nearbyClubs = clubs;
+          _isLoading = false;
+        });
+      } else {
+        // Fetch all clubs
+        final clubs = await ApiService.fetchAllClubs();
+        setState(() {
+          _allClubs = clubs;
+          _isLoading = false;
+        });
+      }
     } catch (e) {
       setState(() {
         _isLoading = false;
-        _errorMessage = 'Error determining position: $e';
+        _errorMessage = 'Error fetching clubs: $e';
       });
     }
-  }*/
+  }
 
-  // Fetch nearby courts from API based on current location
-  Future<void> _fetchNearbyCourts() async {
-    /*
-    if (_currentPosition == null) {
-      setState(() {
-        _isLoading = false;
-        _errorMessage = 'Current position not available.';
-      });
-      return;
-    }*/
+  // Toggle between nearby and all clubs
+  void _toggleNearbyMode() {
+    setState(() {
+      _showNearbyOnly = !_showNearbyOnly;
+    });
+    _fetchClubs();
+  }
 
-    // try {
-      // Simulate API call to get nearby courts
-      // In a real app, we would replace this with an actual API call
-      // await Future.delayed(const Duration(seconds: 1));
-      
-      // Mock data for demonstration
-      final List<Court> mockCourts = [
-        Court(
-          id: '1',
-          name: 'Docs Padel and Pickel',
-          address: '123 Karington St, Kimberley',
-          distance: 1.2,
-          imageUrl: 'https://via.placeholder.com/150',
-          latitude: 0.01,
-          longitude: 0.01,
-        ),
-        Court(
-          id: '2',
-          name: 'AP Padel',
-          address: 'In the KBY, City',
-          distance: 2.5,
-          imageUrl: 'https://via.placeholder.com/150',
-          latitude: 0.01,
-          longitude: 0.02,
-        ),
-      ];
-
-      setState(() {
-        _nearbyCourts = mockCourts;
-        _isLoading = false;
-      });
-      /*
-    } catch (e) {
-      setState(() {
-        _isLoading = false;
-        _errorMessage = 'Error fetching nearby courts: $e';
-      });
-    }*/
+  // Refresh clubs (and update location if needed)
+  Future<void> _refreshClubs() async {
+    if (_showNearbyOnly) {
+      // Update location first for nearby mode
+      await _determinePosition();
+    }
+    await _fetchClubs();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Nearby Courts'),
+        title: Text(_showNearbyOnly ? 'Nearby Clubs' : 'All Clubs'),
         actions: [
+          // Toggle switch
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Nearby',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: _showNearbyOnly ? Colors.blue : Colors.grey,
+                  fontWeight: _showNearbyOnly ? FontWeight.bold : FontWeight.normal,
+                ),
+              ),
+              Switch(
+                value: _showNearbyOnly,
+                onChanged: (value) => _toggleNearbyMode(),
+                activeColor: Colors.blue,
+              ),
+            ],
+          ),
           IconButton(
             icon: const Icon(Icons.refresh),
-           onPressed: () {
-                print('Retry button pressed');
-                //_determinePosition(); // You can also call your function here
-              },
+            onPressed: () {
+              print('Refresh button pressed');
+              _refreshClubs();
+            },
           ),
         ],
       ),
@@ -175,9 +241,9 @@ Future<void> _determinePosition() async {
             ),
             const SizedBox(height: 20),
             ElevatedButton(
-                 onPressed: () {
+              onPressed: () {
                 print('Retry button pressed');
-                //_determinePosition(); // You can also call your function here
+                _refreshClubs();
               },
               child: const Text('Retry'),
             ),
@@ -186,28 +252,70 @@ Future<void> _determinePosition() async {
       );
     }
 
-    if (_nearbyCourts.isEmpty) {
-      return const Center(
-        child: Text('No courts found nearby.'),
+    // Get the appropriate list based on toggle state
+    final currentClubs = _showNearbyOnly ? _nearbyClubs : _allClubs;
+
+    if (currentClubs.isEmpty) {
+      return Center(
+        child: Text(_showNearbyOnly ? 'No clubs found nearby.' : 'No clubs found.'),
       );
     }
 
-    return ListView.builder(
-      itemCount: _nearbyCourts.length,
-      itemBuilder: (context, index) {
-        final court = _nearbyCourts[index];
-        return CourtListItem(
-          court: court,
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => CourtCalendarPage(court: court),
+    return Column(
+      children: [
+        // Info banner
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(12),
+          margin: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: _showNearbyOnly ? Colors.blue.shade50 : Colors.grey.shade50,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: _showNearbyOnly ? Colors.blue.shade200 : Colors.grey.shade200,
+            ),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                _showNearbyOnly ? Icons.location_on : Icons.list,
+                color: _showNearbyOnly ? Colors.blue : Colors.grey.shade600,
+                size: 20,
               ),
-            );
-          },
-        );
-      },
+              const SizedBox(width: 8),
+              Text(
+                _showNearbyOnly 
+                    ? 'Showing ${currentClubs.length} clubs near you'
+                    : 'Showing all ${currentClubs.length} clubs',
+                style: TextStyle(
+                  color: _showNearbyOnly ? Colors.blue.shade800 : Colors.grey.shade700,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+        // Clubs list
+        Expanded(
+          child: ListView.builder(
+            itemCount: currentClubs.length,
+            itemBuilder: (context, index) {
+              final club = currentClubs[index];
+              return ClubListItem(
+                club: club,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => CourtPage(club: club),
+                    ),
+                  );
+                },
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 }

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'models/court.dart';
+import 'package:send_it_mobile/models/clubs.dart';
 import 'screens/home_page.dart';
 
 void main() {

@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../models/clubs.dart';
 import '../models/court.dart';
 import '../models/video_data.dart';
 
 class VideoListItem extends StatelessWidget {
   final VideoData video;
+  final Club club;
   final Court court;
   final DateTime selectedDate;
   final String selectedTimeSlot;
@@ -13,6 +15,7 @@ class VideoListItem extends StatelessWidget {
   const VideoListItem({
     super.key,
     required this.video,
+    required this.club,
     required this.court,
     required this.selectedDate,
     required this.selectedTimeSlot,
@@ -28,23 +31,19 @@ class VideoListItem extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Video thumbnail
-            AspectRatio(
-              aspectRatio: 16 / 9,
-              child: Image.network(
-                video.thumbnailUrl,
-                fit: BoxFit.cover,
-                loadingBuilder: (context, child, loadingProgress) {
-                  if (loadingProgress == null) return child;
-                  return Center(
-                    child: CircularProgressIndicator(
-                      value: loadingProgress.expectedTotalBytes != null
-                          ? loadingProgress.cumulativeBytesLoaded /
-                              loadingProgress.expectedTotalBytes!
-                          : null,
-                    ),
-                  );
-                },
+            // Video placeholder with play icon
+            Container(
+              height: 200,
+              decoration: BoxDecoration(
+                color: Colors.grey[200],
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+              ),
+              child: const Center(
+                child: Icon(
+                  Icons.play_circle_filled,
+                  size: 60,
+                  color: Colors.blue,
+                ),
               ),
             ),
             // Video details
@@ -59,17 +58,37 @@ class VideoListItem extends StatelessWidget {
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 4),
                   Text(
-                  'Court: ${court.name}',
-                  style: TextStyle(color: Colors.grey[700]),
-                ),
+                    'Club: ${club.name}',
+                    style: TextStyle(color: Colors.grey[700]),
+                  ),
                   const SizedBox(height: 4),
                   Text(
-                  'Date: ${DateFormat('MMM d, yyyy').format(selectedDate)} | Time: $selectedTimeSlot',
-                  style: TextStyle(color: Colors.grey[700]),
-                ),
+                    'Court: ${court.name}',
+                    style: TextStyle(color: Colors.grey[700]),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Date: ${DateFormat('MMM d, yyyy').format(selectedDate)} | Time: $selectedTimeSlot',
+                    style: TextStyle(color: Colors.grey[700]),
+                  ),
+                  // Show description if available
+                  if (video.description.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      video.description,
+                      style: TextStyle(
+                        color: Colors.grey[600],
+                        fontSize: 14,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
                 ],
               ),
             ),

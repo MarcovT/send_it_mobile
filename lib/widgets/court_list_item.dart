@@ -14,29 +14,29 @@ class CourtListItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       child: InkWell(
         onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Row(
             children: [
-              // Court image
-              ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: Image.network(
-                  court.imageUrl,
-                  width: 80,
-                  height: 80,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      width: 80,
-                      height: 80,
-                      color: Colors.grey[300],
-                      child: const Icon(Icons.sports_tennis, color: Colors.white),
-                    );
-                  },
+              // Court icon
+              Container(
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  color: Colors.blue.shade100,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: Colors.blue.shade200,
+                  ),
+                ),
+                child: Icon(
+                  Icons.sports_tennis,
+                  color: Colors.blue.shade600,
+                  size: 30,
                 ),
               ),
               const SizedBox(width: 16),
@@ -52,20 +52,32 @@ class CourtListItem extends StatelessWidget {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    Text(court.address),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${court.distance.toStringAsFixed(1)} km away',
-                      style: TextStyle(
-                        color: Colors.green[800],
-                        fontWeight: FontWeight.bold,
-                      ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.videocam,
+                          color: Colors.grey[600],
+                          size: 16,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          'View videos & schedule',
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
               ),
-              const Icon(Icons.chevron_right),
+              // Arrow icon
+              Icon(
+                Icons.chevron_right,
+                color: Colors.grey[400],
+              ),
             ],
           ),
         ),

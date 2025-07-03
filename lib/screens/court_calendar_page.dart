@@ -1,14 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
+import '../models/clubs.dart';
 import '../models/court.dart';
 import '../models/video_data.dart';
 import '../widgets/video_list_item.dart';
+import '../services/api_service.dart';
 
 class CourtCalendarPage extends StatefulWidget {
+  final Club club;
   final Court court;
 
-  const CourtCalendarPage({super.key, required this.court});
+  const CourtCalendarPage({
+    super.key, 
+    required this.club,
+    required this.court,
+  });
 
   @override
   State<CourtCalendarPage> createState() => _CourtCalendarPageState();
@@ -18,23 +25,9 @@ class _CourtCalendarPageState extends State<CourtCalendarPage> {
   CalendarFormat _calendarFormat = CalendarFormat.month;
   DateTime _selectedDay = DateTime.now();
   DateTime _focusedDay = DateTime.now();
-  String? _selectedTimeSlot;
+  TimeOfDay? _selectedTime;
   bool _isLoadingVideos = false;
   List<VideoData> _videos = [];
-
-  final List<String> _timeSlots = [
-    '9:00 - 10:00',
-    '10:00 - 11:00',
-    '11:00 - 12:00',
-    '12:00 - 13:00',
-    '13:00 - 14:00',
-    '14:00 - 15:00',
-    '15:00 - 16:00',
-    '16:00 - 17:00',
-    '17:00 - 18:00',
-    '18:00 - 19:00',
-    '19:00 - 20:00',
-  ];
 
   @override
   Widget build(BuildContext context) {
@@ -65,7 +58,7 @@ class _CourtCalendarPageState extends State<CourtCalendarPage> {
                     setState(() {
                       _selectedDay = selectedDay;
                       _focusedDay = focusedDay;
-                      _selectedTimeSlot = null;
+                      _selectedTime = null;
                       _videos = [];
                     });
                   },
@@ -87,48 +80,78 @@ class _CourtCalendarPageState extends State<CourtCalendarPage> {
                   ),
                 ),
               ),
-              // Time slot selector
+              // Time picker section
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 16.0),
                 child: Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    'Select Time Slot:',
+                    'Select Time:',
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                 ),
               ),
-              const SizedBox(height: 8),
-              // Time slots horizontal list
-              // Create a court list item for each time slot
-              SizedBox(
-                height: 60,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  itemCount: _timeSlots.length,
-                  itemBuilder: (context, index) {
-                    final timeSlot = _timeSlots[index];
-                    final isSelected = timeSlot == _selectedTimeSlot;
-                    
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 8.0),
-                      child: ChoiceChip(
-                        label: Text(timeSlot),
-                        selected: isSelected,
-                        onSelected: (selected) {
-                          setState(() {
-                            _selectedTimeSlot = selected ? timeSlot : null;
-                            if (selected) {
-                              _fetchVideos(_selectedDay, timeSlot);
-                            } else {
-                              _videos = [];
-                            }
-                          });
-                        },
+              const SizedBox(height: 12),
+              // Beautiful time picker
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Card(
+                  elevation: 2,
+                  child: InkWell(
+                    onTap: () => _selectTime(context),
+                    borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      padding: const EdgeInsets.all(20),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 50,
+                            height: 50,
+                            decoration: BoxDecoration(
+                              color: _selectedTime != null ? Colors.blue.shade100 : Colors.grey.shade100,
+                              borderRadius: BorderRadius.circular(25),
+                            ),
+                            child: Icon(
+                              Icons.access_time,
+                              color: _selectedTime != null ? Colors.blue.shade600 : Colors.grey.shade600,
+                              size: 24,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  _selectedTime != null ? 'Selected Time' : 'Tap to select time',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.grey[600],
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  _selectedTime != null 
+                                      ? _selectedTime!.format(context)
+                                      : 'No time selected',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: _selectedTime != null ? Colors.blue.shade800 : Colors.grey.shade700,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Icon(
+                            Icons.chevron_right,
+                            color: Colors.grey[400],
+                          ),
+                        ],
                       ),
-                    );
-                  },
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(height: 16),
@@ -142,11 +165,11 @@ class _CourtCalendarPageState extends State<CourtCalendarPage> {
   }
 
   Widget _buildVideosSection() {
-    if (_selectedTimeSlot == null) {
+    if (_selectedTime == null) {
       return const SizedBox(
         height: 200,
         child: Center(
-          child: Text('Select a time slot to view videos'),
+          child: Text('Select a time to view videos'),
         ),
       );
     }
@@ -178,12 +201,13 @@ class _CourtCalendarPageState extends State<CourtCalendarPage> {
         final video = _videos[index];
         return VideoListItem(
           video: video,
+          club: widget.club,
           court: widget.court,
           selectedDate: _selectedDay,
-          selectedTimeSlot: _selectedTimeSlot!,
+          selectedTimeSlot: _selectedTime!.format(context),
           onTap: () {
             // Open video player
-            // In a real app, this would navigate to a video player, was thinking of using the cool video_editor_2?
+            // In a real app, this would navigate to a video player
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text('Playing video: ${video.title}'),
@@ -195,49 +219,54 @@ class _CourtCalendarPageState extends State<CourtCalendarPage> {
     );
   }
 
-  // Fetch videos for the selected date and time slot no idea how to do this using an API, have never done it before.
-  Future<void> _fetchVideos(DateTime date, String timeSlot) async {
+  // Time picker dialog
+  Future<void> _selectTime(BuildContext context) async {
+    final TimeOfDay? picked = await showTimePicker(
+      context: context,
+      initialTime: _selectedTime ?? TimeOfDay.now(),
+      builder: (BuildContext context, Widget? child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: Theme.of(context).colorScheme.copyWith(
+              primary: Colors.blue,
+              onPrimary: Colors.white,
+              surface: Colors.white,
+              onSurface: Colors.black,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    
+    if (picked != null && picked != _selectedTime) {
+      setState(() {
+        _selectedTime = picked;
+      });
+      // Fetch videos for the selected time
+      _fetchVideos(_selectedDay, picked);
+    }
+  }
+
+  // Fetch videos for the selected date and time using API
+  Future<void> _fetchVideos(DateTime date, TimeOfDay time) async {
     setState(() {
       _isLoadingVideos = true;
     });
 
     try {
-      // Simulate API call to get videos
-      await Future.delayed(const Duration(seconds: 1));
+      // Convert TimeOfDay to hour format for API
+      final timeSlot = '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')} - ${(time.hour + 1).toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
       
-      // Parse the timeSlot to get the start hour
-      final startHour = int.parse(timeSlot.split(':')[0]);
+      // Use the API service to fetch videos for this specific court
+      final videos = await ApiService.fetchCourtVideos(
+        widget.court.id,
+        date,
+        timeSlot,
+      );
       
-      // Format the date for the API request
-      final formattedDate = DateFormat('yyyy-MM-dd').format(date);
-      
-      // Mock data for demonstration
-      final List<VideoData> mockVideos = [
-        VideoData(
-          id: '1',
-          title: 'Court ${widget.court.id}',
-          thumbnailUrl: '',
-          videoUrl: 'https://example.com/video1.mp4',
-          duration: '45:22',
-        ),
-        VideoData(
-          id: '2',
-          title: 'Court ${widget.court.id}',
-          thumbnailUrl: '',
-          videoUrl: 'https://example.com/video2.mp4',
-          duration: '32:15',
-        ),
-        VideoData(
-          id: '3',
-          title: 'Court ${widget.court.id}',
-          thumbnailUrl: '',
-          videoUrl: 'https://example.com/video3.mp4',
-          duration: '58:40',
-        ),
-      ];
-
       setState(() {
-        _videos = mockVideos;
+        _videos = videos;
         _isLoadingVideos = false;
       });
     } catch (e) {
