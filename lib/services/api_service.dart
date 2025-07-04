@@ -75,7 +75,7 @@ class ApiService {
   // Fetch courts for a specific club
   static Future<List<Court>> fetchClubCourts(String clubId) async {
     try {
-      final url = '$baseUrl/courts'; // or whatever your courts endpoint is
+      final url = '$baseUrl/courts'; 
       print('Fetching all courts from: $url');
       
       final response = await http.get(Uri.parse(url));
@@ -175,7 +175,7 @@ class ApiService {
     }
   }
 
-  // Client-side helper method to filter videos by time slot
+  // Client-side helper method to filter videos by time slot - sadly doesn't work :(
   static List<VideoData> filterVideosByTimeSlot(List<VideoData> videos, TimeOfDay selectedTime) {
     final targetHour = selectedTime.hour;
     
