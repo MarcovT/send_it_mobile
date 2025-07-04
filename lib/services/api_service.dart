@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:path/path.dart' as p;
 import 'package:http/http.dart' as http;
@@ -70,12 +71,12 @@ class ApiService {
       throw Exception('Error fetching all clubs: $e');
     }
   }
- 
+  
   // Fetch courts for a specific club
   static Future<List<Court>> fetchClubCourts(String clubId) async {
     try {
-      final url = '$baseUrl/clubs/$clubId/courts';
-      print('Fetching courts from: $url');
+      final url = '$baseUrl/courts'; // or whatever your courts endpoint is
+      print('Fetching all courts from: $url');
       
       final response = await http.get(Uri.parse(url));
       
@@ -94,21 +95,28 @@ class ApiService {
         final dynamic decodedData = json.decode(responseBody);
         
         // Handle different response formats
+        List<Court> allCourts = [];
         if (decodedData is Map && decodedData.containsKey('results')) {
           // Response with results key
           final List<dynamic> resultsList = decodedData['results'];
-          return resultsList.map((json) => _parseCourt(json)).toList();
+          allCourts = resultsList.map((json) => _parseCourt(json)).toList();
         } else if (decodedData is List) {
           // Direct array response
-          return decodedData.map((json) => _parseCourt(json)).toList();
+          allCourts = decodedData.map((json) => _parseCourt(json)).toList();
         } else if (decodedData is Map && decodedData.containsKey('courts')) {
           // Response with courts key
           final List<dynamic> courtsList = decodedData['courts'];
-          return courtsList.map((json) => _parseCourt(json)).toList();
+          allCourts = courtsList.map((json) => _parseCourt(json)).toList();
         } else {
           print('Unexpected response format for courts: $decodedData');
           return [];
         }
+        
+        // Filter courts by clubId
+        final filteredCourts = allCourts.where((court) => court.clubId == clubId).toList();
+        print('Found ${filteredCourts.length} courts for club $clubId');
+        
+        return filteredCourts;
       } else {
         throw Exception('Failed to load courts: ${response.statusCode} - ${response.body}');
       }
@@ -118,15 +126,12 @@ class ApiService {
     }
   }
  
-  // Fetch videos for a specific court, date and time
-  static Future<List<VideoData>> fetchCourtVideos(String courtId, DateTime date, String timeSlot) async {
+  // Fetch videos for a specific court and date (simplified - no time filtering on server)
+  static Future<List<VideoData>> fetchCourtVideos(String courtId, DateTime date) async {
     try {
-      // Parse the timeSlot to get the start hour (e.g., "9:00 - 10:00" -> 9)
-      final startHour = int.parse(timeSlot.split(':')[0]);
-      
       final formattedDate = '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
       
-      final url = '$baseUrl/videos?courtId=$courtId&date=$formattedDate&hour=$startHour';
+      final url = '$baseUrl/videos?courtId=$courtId&date=$formattedDate';
       print('Fetching videos from: $url');
       
       final response = await http.get(Uri.parse(url));
@@ -169,6 +174,61 @@ class ApiService {
       throw Exception('Error fetching videos: $e');
     }
   }
+
+  // Client-side helper method to filter videos by time slot
+  static List<VideoData> filterVideosByTimeSlot(List<VideoData> videos, TimeOfDay selectedTime) {
+    final targetHour = selectedTime.hour;
+    
+    return videos.where((video) {
+      // Parse the video title or timestamp to extract the hour
+      // Assuming your video titles contain timestamp like "2025-06-17T19:39:38"
+      try {
+        // Extract timestamp from title (you might need to adjust this parsing logic)
+        final title = video.title;
+        final timestampMatch = RegExp(r'(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})').firstMatch(title);
+        
+        if (timestampMatch != null) {
+          final timestamp = timestampMatch.group(1)!;
+          final dateTime = DateTime.parse(timestamp);
+          
+          // Check if video hour matches selected time slot
+          return dateTime.hour == targetHour;
+        }
+        
+        // If no timestamp found, you might have other fields to check
+        // For example, if you have a 'recordedAt' field in your video data
+        return false;
+      } catch (e) {
+        print('Error parsing video timestamp: $e');
+        return false;
+      }
+    }).toList();
+  }
+
+  // Alternative filtering method if you have a different timestamp field
+  static List<VideoData> filterVideosByTimeSlotAlternative(List<VideoData> videos, TimeOfDay selectedTime) {
+    final targetHour = selectedTime.hour;
+    
+    return videos.where((video) {
+      // If your VideoData model has a DateTime field (like createdAt, recordedAt, etc.)
+      // You would check that field instead of parsing the title
+      
+      // For now, let's assume you parse from title
+      try {
+        // Look for hour pattern in title (like "19:39:38")
+        final timeMatch = RegExp(r'T(\d{2}):').firstMatch(video.title);
+        if (timeMatch != null) {
+          final hour = int.parse(timeMatch.group(1)!);
+          return hour == targetHour;
+        }
+        return false;
+      } catch (e) {
+        print('Error parsing video time: $e');
+        return false;
+      }
+    }).toList();
+  }
+
 
   // Parse JSON into Club object
   static Club _parseClubs(Map<String, dynamic> json) {

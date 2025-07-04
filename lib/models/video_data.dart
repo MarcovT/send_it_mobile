@@ -8,6 +8,7 @@ class VideoData {
   final String description;
   final dynamic sponsors;
   final String tags;
+  final DateTime? createdAt; // Added for better timestamp handling
 
   VideoData({
     required this.id,
@@ -19,5 +20,6 @@ class VideoData {
     required this.description,
     required this.sponsors,
     required this.tags,
+    this.createdAt,
   });
 }

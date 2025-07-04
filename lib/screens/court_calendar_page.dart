@@ -58,9 +58,12 @@ class _CourtCalendarPageState extends State<CourtCalendarPage> {
                     setState(() {
                       _selectedDay = selectedDay;
                       _focusedDay = focusedDay;
-                      _selectedTime = null;
+                      _selectedTime = null; // Reset time selection
                       _videos = [];
                     });
+                    
+                    // Automatically fetch all videos for the selected date
+                    _fetchVideosForDate(selectedDay);
                   },
                   onFormatChanged: (format) {
                     setState(() {
@@ -86,9 +89,41 @@ class _CourtCalendarPageState extends State<CourtCalendarPage> {
                 child: Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    'Select Time:',
+                    'Filter by Time (Optional):',
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              // Show current filter status
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 16.0),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: _selectedTime != null ? Colors.blue.shade50 : Colors.grey.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: _selectedTime != null ? Colors.blue.shade200 : Colors.grey.shade200,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      _selectedTime != null ? Icons.filter_alt : Icons.filter_alt_off,
+                      color: _selectedTime != null ? Colors.blue.shade600 : Colors.grey.shade600,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      _selectedTime != null 
+                          ? 'Filtering by time: ${_selectedTime!.format(context)}'
+                          : 'Showing all videos for selected date',
+                      style: TextStyle(
+                        color: _selectedTime != null ? Colors.blue.shade800 : Colors.grey.shade700,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: 12),
@@ -123,7 +158,7 @@ class _CourtCalendarPageState extends State<CourtCalendarPage> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  _selectedTime != null ? 'Selected Time' : 'Tap to select time',
+                                  _selectedTime != null ? 'Selected Time' : 'Tap to filter by time',
                                   style: TextStyle(
                                     fontSize: 14,
                                     color: Colors.grey[600],
@@ -134,7 +169,7 @@ class _CourtCalendarPageState extends State<CourtCalendarPage> {
                                 Text(
                                   _selectedTime != null 
                                       ? _selectedTime!.format(context)
-                                      : 'No time selected',
+                                      : 'All videos shown',
                                   style: TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
@@ -144,6 +179,12 @@ class _CourtCalendarPageState extends State<CourtCalendarPage> {
                               ],
                             ),
                           ),
+                          // Clear time filter button
+                          if (_selectedTime != null)
+                            IconButton(
+                              icon: Icon(Icons.clear, color: Colors.grey[600]),
+                              onPressed: () => _clearTimeFilter(),
+                            ),
                           Icon(
                             Icons.chevron_right,
                             color: Colors.grey[400],
@@ -165,15 +206,6 @@ class _CourtCalendarPageState extends State<CourtCalendarPage> {
   }
 
   Widget _buildVideosSection() {
-    if (_selectedTime == null) {
-      return const SizedBox(
-        height: 200,
-        child: Center(
-          child: Text('Select a time to view videos'),
-        ),
-      );
-    }
-
     if (_isLoadingVideos) {
       return const SizedBox(
         height: 200,
@@ -187,35 +219,74 @@ class _CourtCalendarPageState extends State<CourtCalendarPage> {
       return const SizedBox(
         height: 200,
         child: Center(
-          child: Text('No videos available for the selected time'),
+          child: Text('No videos available for the selected date'),
         ),
       );
     }
 
-    return ListView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      padding: const EdgeInsets.all(16),
-      itemCount: _videos.length,
-      itemBuilder: (context, index) {
-        final video = _videos[index];
-        return VideoListItem(
-          video: video,
-          club: widget.club,
-          court: widget.court,
-          selectedDate: _selectedDay,
-          selectedTimeSlot: _selectedTime!.format(context),
-          onTap: () {
-            // Open video player
-            // In a real app, this would navigate to a video player
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Playing video: ${video.title}'),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Video count and filter info
+        Container(
+          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.green.shade50,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.green.shade200),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                Icons.videocam,
+                color: Colors.green.shade600,
+                size: 20,
               ),
-            );
-          },
-        );
-      },
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  _selectedTime != null 
+                      ? 'Showing ${_videos.length} videos for ${_selectedTime!.format(context)}'
+                      : 'Showing all ${_videos.length} videos for ${DateFormat('MMM d, yyyy').format(_selectedDay)}',
+                  style: TextStyle(
+                    color: Colors.green.shade800,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        // Videos list
+        Expanded(
+          child: ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            itemCount: _videos.length,
+            itemBuilder: (context, index) {
+              final video = _videos[index];
+              return VideoListItem(
+                video: video,
+                club: widget.club,
+                court: widget.court,
+                selectedDate: _selectedDay,
+                selectedTimeSlot: _selectedTime?.format(context) ?? 'All Day',
+                onTap: () {
+                  // Open video player
+                  // In a real app, this would navigate to a video player
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Playing video: ${video.title}'),
+                    ),
+                  );
+                },
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 
@@ -239,34 +310,33 @@ class _CourtCalendarPageState extends State<CourtCalendarPage> {
       },
     );
     
-    if (picked != null && picked != _selectedTime) {
+    if (picked != null) {
       setState(() {
         _selectedTime = picked;
       });
-      // Fetch videos for the selected time
-      _fetchVideos(_selectedDay, picked);
+      
+      // Filter videos by the selected time
+      _filterVideosByTime(picked);
     }
   }
 
-  // Fetch videos for the selected date and time using API
-  Future<void> _fetchVideos(DateTime date, TimeOfDay time) async {
+  // Fetch all videos for a selected date (no time filtering)
+  Future<void> _fetchVideosForDate(DateTime date) async {
     setState(() {
       _isLoadingVideos = true;
     });
 
     try {
-      // Convert TimeOfDay to hour format for API
-      final timeSlot = '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')} - ${(time.hour + 1).toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
-      
-      // Use the API service to fetch videos for this specific court
-      final videos = await ApiService.fetchCourtVideos(
+      // Fetch all videos for the selected date
+      final allVideosForDate = await ApiService.fetchCourtVideos(
         widget.court.id,
         date,
-        timeSlot,
       );
       
+      print('Fetched ${allVideosForDate.length} videos for ${date.toIso8601String().split('T')[0]}');
+      
       setState(() {
-        _videos = videos;
+        _videos = allVideosForDate;
         _isLoadingVideos = false;
       });
     } catch (e) {
@@ -274,7 +344,6 @@ class _CourtCalendarPageState extends State<CourtCalendarPage> {
         _isLoadingVideos = false;
       });
       if (mounted) {
-        // Show error message
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error fetching videos: $e'),
@@ -283,5 +352,32 @@ class _CourtCalendarPageState extends State<CourtCalendarPage> {
         );
       }
     }
+  }
+
+  // Filter videos by time slot (called when time is selected)
+  void _filterVideosByTime(TimeOfDay time) {
+    if (_videos.isEmpty) return;
+    
+    // Get all videos for the current date
+    _fetchVideosForDate(_selectedDay).then((_) {
+      // Then filter by time
+      final filteredVideos = ApiService.filterVideosByTimeSlot(_videos, time);
+      
+      print('Filtered to ${filteredVideos.length} videos for hour ${time.hour}');
+      
+      setState(() {
+        _videos = filteredVideos;
+      });
+    });
+  }
+
+  // Clear time filter and show all videos for the date
+  void _clearTimeFilter() {
+    setState(() {
+      _selectedTime = null;
+    });
+    
+    // Reload all videos for the selected date
+    _fetchVideosForDate(_selectedDay);
   }
 }
