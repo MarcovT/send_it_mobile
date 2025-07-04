@@ -199,14 +199,7 @@ class ClubSearchService {
     if (!_isLoaded) return [];
     
     // Calculate distance and sort
-    final clubsWithDistance = _allClubs.map((club) {
-      // Simple distance calculation (you might want to use a proper geo library)
-      final lat1 = latitude;
-      final lon1 = longitude;
-      final lat2 = club.distance; // Assuming this contains latitude
-      final lon2 = 0.0; // You'd need longitude from your club model
-      
-      // For now, use existing distance if available
+    final clubsWithDistance = _allClubs.map((club) {  
       return MapEntry(club, club.distance);
     }).toList();
     
