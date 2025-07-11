@@ -4,7 +4,6 @@ import 'package:table_calendar/table_calendar.dart';
 import '../models/clubs.dart';
 import '../models/court.dart';
 import '../models/video_data.dart';
-import '../widgets/video_list_item.dart';
 import '../services/api_service.dart';
 
 class CourtCalendarPage extends StatefulWidget {
@@ -25,7 +24,7 @@ class _CourtCalendarPageState extends State<CourtCalendarPage> {
   CalendarFormat _calendarFormat = CalendarFormat.month;
   DateTime _selectedDay = DateTime.now();
   DateTime _focusedDay = DateTime.now();
-  TimeOfDay? _selectedTime;
+  String _selectedTimePeriod = 'All Day';
   bool _isLoadingVideos = false;
   List<VideoData> _videos = [];
 
@@ -58,10 +57,10 @@ class _CourtCalendarPageState extends State<CourtCalendarPage> {
                     setState(() {
                       _selectedDay = selectedDay;
                       _focusedDay = focusedDay;
-                      _selectedTime = null; // Reset time selection
+                      _selectedTimePeriod = 'All Day'; // Reset time selection
                       _videos = [];
                     });
-                    
+                    print('Date selected:  $selectedDay');
                     // Automatically fetch all videos for the selected date
                     _fetchVideosForDate(selectedDay);
                   },
@@ -83,120 +82,9 @@ class _CourtCalendarPageState extends State<CourtCalendarPage> {
                   ),
                 ),
               ),
-              // Time picker section
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16.0),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    'Filter by Time (Optional):',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),
-              // Show current filter status
-              Container(
-                margin: const EdgeInsets.symmetric(horizontal: 16.0),
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: _selectedTime != null ? Colors.blue.shade50 : Colors.grey.shade50,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: _selectedTime != null ? Colors.blue.shade200 : Colors.grey.shade200,
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      _selectedTime != null ? Icons.filter_alt : Icons.filter_alt_off,
-                      color: _selectedTime != null ? Colors.blue.shade600 : Colors.grey.shade600,
-                      size: 20,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      _selectedTime != null 
-                          ? 'Filtering by time: ${_selectedTime!.format(context)}'
-                          : 'Showing all videos for selected date',
-                      style: TextStyle(
-                        color: _selectedTime != null ? Colors.blue.shade800 : Colors.grey.shade700,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 12),
-              // Beautiful time picker
-              Container(
-                margin: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Card(
-                  elevation: 2,
-                  child: InkWell(
-                    onTap: () => _selectTime(context),
-                    borderRadius: BorderRadius.circular(12),
-                    child: Container(
-                      padding: const EdgeInsets.all(20),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 50,
-                            height: 50,
-                            decoration: BoxDecoration(
-                              color: _selectedTime != null ? Colors.blue.shade100 : Colors.grey.shade100,
-                              borderRadius: BorderRadius.circular(25),
-                            ),
-                            child: Icon(
-                              Icons.access_time,
-                              color: _selectedTime != null ? Colors.blue.shade600 : Colors.grey.shade600,
-                              size: 24,
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  _selectedTime != null ? 'Selected Time' : 'Tap to filter by time',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.grey[600],
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  _selectedTime != null 
-                                      ? _selectedTime!.format(context)
-                                      : 'All videos shown',
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                    color: _selectedTime != null ? Colors.blue.shade800 : Colors.grey.shade700,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          // Clear time filter button
-                          if (_selectedTime != null)
-                            IconButton(
-                              icon: Icon(Icons.clear, color: Colors.grey[600]),
-                              onPressed: () => _clearTimeFilter(),
-                            ),
-                          Icon(
-                            Icons.chevron_right,
-                            color: Colors.grey[400],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
+              // Time filter toggle buttons
+              _buildTimeToggleButtons(),
               const SizedBox(height: 16),
-              // Videos section
               _buildVideosSection(),
             ],
           ),
@@ -207,19 +95,19 @@ class _CourtCalendarPageState extends State<CourtCalendarPage> {
 
   Widget _buildVideosSection() {
     if (_isLoadingVideos) {
-      return const SizedBox(
-        height: 200,
-        child: Center(
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(20),
           child: CircularProgressIndicator(),
         ),
       );
     }
 
     if (_videos.isEmpty) {
-      return const SizedBox(
-        height: 200,
-        child: Center(
-          child: Text('No videos available for the selected date'),
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(20),
+          child: Text('No videos available for this date/Time Period'),
         ),
       );
     }
@@ -227,122 +115,178 @@ class _CourtCalendarPageState extends State<CourtCalendarPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Video count and filter info
-        Container(
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: Colors.green.shade50,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Colors.green.shade200),
-          ),
-          child: Row(
-            children: [
-              Icon(
-                Icons.videocam,
-                color: Colors.green.shade600,
-                size: 20,
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  _selectedTime != null 
-                      ? 'Showing ${_videos.length} videos for ${_selectedTime!.format(context)}'
-                      : 'Showing all ${_videos.length} videos for ${DateFormat('MMM d, yyyy').format(_selectedDay)}',
-                  style: TextStyle(
-                    color: Colors.green.shade800,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-            ],
+        Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Text(
+            'Available Sessions (${_videos.length})',
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
         ),
-        // Videos list
-        Expanded(
+        // scrollable video list
+        SizedBox(
+          height: 400, // Fixed height to allow scrolling
           child: ListView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
             padding: const EdgeInsets.symmetric(horizontal: 16),
             itemCount: _videos.length,
             itemBuilder: (context, index) {
               final video = _videos[index];
-              return VideoListItem(
-                video: video,
-                club: widget.club,
-                court: widget.court,
-                selectedDate: _selectedDay,
-                selectedTimeSlot: _selectedTime?.format(context) ?? 'All Day',
-                onTap: () {
-                  // Open video player
-                  // In a real app, this would navigate to a video player
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Playing video: ${video.title}'),
+              
+              // Extract time from the video data
+              String timeDisplay = 'All Day';
+              if (video.createdAt != null) {
+                timeDisplay = DateFormat('HH:mm').format(video.createdAt!);
+              }
+              
+              return Container(
+                margin: const EdgeInsets.only(bottom: 8),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.blue.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.blue.shade200),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.sports_tennis, color: Colors.blue.shade600),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Time: $timeDisplay',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  );
-                },
+                    IconButton(
+                      icon: Icon(Icons.play_circle, color: Colors.blue.shade600),
+                      onPressed: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Playing ${widget.court.name} at $timeDisplay')),
+                        );
+                      },
+                    ),
+                  ],
+                ),
               );
             },
+          ),
+        ),
+        const SizedBox(height: 20), // Bottom spacing
+      ],
+    );
+  }
+
+  // Time toggle buttons widget
+  Widget _buildTimeToggleButtons() {
+    final List<Map<String, dynamic>> timeOptions = [
+      {'label': 'All\nDay', 'icon': Icons.all_inclusive},
+      {'label': 'Morning\n6AM-12PM', 'icon': Icons.wb_sunny},
+      {'label': 'Afternoon\n12AM-6PM', 'icon': Icons.wb_sunny_outlined},
+      {'label': 'Evening\n6AM-12PM', 'icon': Icons.brightness_3},
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16.0),
+          child: Text(
+            'Filter by Time:',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          child: Row(
+            children: timeOptions.map((option) {
+              final isSelected = _selectedTimePeriod == option['label'];
+              return Expanded(
+                child: Container(
+                  margin: const EdgeInsets.only(right: 8),
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      setState(() {
+                        _selectedTimePeriod = option['label'];
+                      });
+                      _filterByTimePeriod(option['label']);
+                    },
+                    icon: Icon(
+                      option['icon'],
+                      size: 16,
+                      color: isSelected ? Colors.white : Colors.blue.shade600,
+                    ),
+                    label: Text(
+                      option['label'],
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: isSelected ? Colors.white : Colors.blue.shade600,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: isSelected ? Colors.blue.shade600 : Colors.blue.shade50,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
           ),
         ),
       ],
     );
   }
 
-  // Time picker dialog
-  Future<void> _selectTime(BuildContext context) async {
-    final TimeOfDay? picked = await showTimePicker(
-      context: context,
-      initialTime: _selectedTime ?? TimeOfDay.now(),
-      builder: (BuildContext context, Widget? child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: Theme.of(context).colorScheme.copyWith(
-              primary: Colors.blue,
-              onPrimary: Colors.white,
-              surface: Colors.white,
-              onSurface: Colors.black,
-            ),
-          ),
-          child: child!,
-        );
-      },
-    );
-    
-    if (picked != null) {
-      setState(() {
-        _selectedTime = picked;
-      });
-      
-      // Filter videos by the selected time
-      _filterVideosByTime(picked);
-    }
-  }
-
-  // Fetch all videos for a selected date (no time filtering) - need to look into the loading of videos. 
+  // Fetch all videos for a selected date (no time filtering)
   Future<void> _fetchVideosForDate(DateTime date) async {
+    String dateOnly = date.toIso8601String().split('T')[0];
+    print('🔍 Starting to fetch videos for date: $dateOnly');
+    print('🏟️ Court ID: ${widget.court.id}');
+    
     setState(() {
       _isLoadingVideos = true;
     });
 
     try {
-      // Fetch all videos for the selected date
+      // Fetch all videos for the selected date (pass only date part)
       final allVideosForDate = await ApiService.fetchCourtVideos(
         widget.court.id,
-        date,
+        dateOnly,
       );
       
-      print('Fetched ${allVideosForDate.length} videos for ${date.toIso8601String().split('T')[0]}');
+      print('✅ Successfully fetched ${allVideosForDate.length} videos');
+      
+      // Debug: Print first few video titles if available
+      if (allVideosForDate.isNotEmpty) {
+        print('📹 First video: ${allVideosForDate[0].title}');
+        if (allVideosForDate.length > 1) {
+          print('📹 Second video: ${allVideosForDate[1].title}');
+        }
+      }
       
       setState(() {
         _videos = allVideosForDate;
         _isLoadingVideos = false;
       });
+      
+      print('🎯 State updated - videos list length: ${_videos.length}');
+      
     } catch (e) {
+      print('❌ Error fetching videos: $e');
       setState(() {
         _isLoadingVideos = false;
+        _videos = []; // Clear videos on error
       });
+      
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -354,30 +298,44 @@ class _CourtCalendarPageState extends State<CourtCalendarPage> {
     }
   }
 
-  // Filter videos by time slot (called when time is selected)
-  void _filterVideosByTime(TimeOfDay time) {
-    if (_videos.isEmpty) return;
+  // Filter videos by time period
+  void _filterByTimePeriod(String period) {
+    if (period == 'All\nDay') {
+      _fetchVideosForDate(_selectedDay);
+      return;
+    }
     
-    // Get all videos for the current date
+    // Get all videos first, then filter
     _fetchVideosForDate(_selectedDay).then((_) {
-      // Then filter by time
-      final filteredVideos = ApiService.filterVideosByTimeSlot(_videos, time);
+      int startHour = 0;
+      int endHour = 24;
       
-      print('Filtered to ${filteredVideos.length} videos for hour ${time.hour}');
+      switch (period) {
+        case 'Morning\n6AM-12PM':
+          startHour = 6;
+          endHour = 12;
+          break;
+        case 'Afternoon\n12AM-6PM':
+          startHour = 12;
+          endHour = 18;
+          break;
+        case 'Evening\n6AM-12PM':
+          startHour = 18;
+          endHour = 22;
+          break;
+      }
+      
+      final filteredVideos = _videos.where((video) {
+        if (video.createdAt == null) return false;
+        final videoHour = video.createdAt!.hour;
+        return videoHour >= startHour && videoHour < endHour;
+      }).toList();
       
       setState(() {
         _videos = filteredVideos;
       });
+      
+      print('Filtered to ${filteredVideos.length} videos for $period');
     });
-  }
-
-  // Clear time filter and show all videos for the date
-  void _clearTimeFilter() {
-    setState(() {
-      _selectedTime = null;
-    });
-    
-    // Reload all videos for the selected date
-    _fetchVideosForDate(_selectedDay);
   }
 }

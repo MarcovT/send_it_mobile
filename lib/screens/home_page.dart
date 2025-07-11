@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:send_it_mobile/services/api_service.dart';
 import 'package:send_it_mobile/services/club_search_service.dart';
 import 'dart:async';
@@ -142,7 +141,7 @@ class _HomePageState extends State<HomePage> {
       print('Location obtained: ${position.latitude}, ${position.longitude}');
     } catch (e) {
       print('Error determining position: $e, using default location');
-      // Use default location if there's an error
+      // Use default location if there's an error we need to make a default maybe middle BFN/CT/JHB?
       _currentPosition = Position(
         latitude: -28.749965,
         longitude: 24.740717,
@@ -180,7 +179,8 @@ class _HomePageState extends State<HomePage> {
           _isLoading = false;
         });
       } else {
-        // Fetch all clubs
+        // Fetch all clubs -> I am going to change this and the API functions to just use one. We can just autopopulate with the default
+        // not sure what you guys think. But when they toggle the button off I want the distances to show if they allowed location permissions.
         final clubs = await ApiService.fetchAllClubs();
         setState(() {
           _allClubs = clubs;
@@ -195,13 +195,13 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  // Debounced search function
+  // Debounced function
   void _onSearchChanged(String query) {
     // Cancel the previous timer
     _debounceTimer?.cancel();
     
     // For local search, we can use a shorter debounce
-    _debounceTimer = Timer(const Duration(milliseconds: 300), () {
+    _debounceTimer = Timer(const Duration(milliseconds: 250), () {
       _searchClubs(query);
     });
   }
@@ -296,14 +296,14 @@ class _HomePageState extends State<HomePage> {
                   'Nearby',
                   style: TextStyle(
                     fontSize: 14,
-                    color: _showNearbyOnly ? Colors.blue : Colors.grey,
+                    color: _showNearbyOnly ? const Color.fromARGB(255, 201, 224, 242) : const Color.fromARGB(255, 244, 244, 244),
                     fontWeight: _showNearbyOnly ? FontWeight.bold : FontWeight.normal,
                   ),
                 ),
                 Switch(
                   value: _showNearbyOnly,
                   onChanged: (value) => _toggleNearbyMode(),
-                  activeColor: Colors.blue,
+                  activeColor: const Color.fromARGB(255, 201, 224, 242),
                 ),
               ],
             ),

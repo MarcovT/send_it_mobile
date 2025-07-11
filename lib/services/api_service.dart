@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:path/path.dart' as p;
 import 'package:http/http.dart' as http;
@@ -7,7 +6,7 @@ import '../models/court.dart';
 import '../models/video_data.dart';
 
 class ApiService {
-  static const String baseUrl = 'http://172.24.64.1:3000/api';
+  static const String baseUrl = 'http://192.168.3.208:3000/api';
   
   // Fetch nearby clubs based on user location
   static Future<List<Club>> fetchNearbyClubsAll(double latitude, double longitude) async {
@@ -125,110 +124,69 @@ class ApiService {
       throw Exception('Error fetching courts: $e');
     }
   }
- 
-  // Fetch videos for a specific court and date (simplified - no time filtering on server)
-  static Future<List<VideoData>> fetchCourtVideos(String courtId, DateTime date) async {
+   static Future<List<VideoData>> fetchCourtVideos(String courtId, String dateString) async {
     try {
-      final formattedDate = '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+      // Build the correct URL based on your Postman example
+      final String url = '$baseUrl/courts/videos/$courtId/$dateString';
       
-      final url = '$baseUrl/videos?courtId=$courtId&date=$formattedDate';
-      print('Fetching videos from: $url');
+      print('🌐 API URL: $url');
       
-      final response = await http.get(Uri.parse(url));
-      
-      print('Videos Response status: ${response.statusCode}');
-      print('Videos Response body: ${response.body}');
-      
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {
+          'Content-Type': 'application/json',
+          // Add any auth headers if needed
+        },
+      );
+
+      print('📡 Response Status: ${response.statusCode}');
+      print('📄 Response Body: ${response.body}');
+
       if (response.statusCode == 200) {
-        final responseBody = response.body;
+        final Map<String, dynamic> jsonResponse = json.decode(response.body);
         
-        // Handle empty response
-        if (responseBody.isEmpty) {
-          print('Empty response body');
-          return [];
-        }
-        
-        final dynamic decodedData = json.decode(responseBody);
-        
-        // Handle different response formats
-        if (decodedData is Map && decodedData.containsKey('results')) {
-          // Response with results key (matches your API format)
-          final List<dynamic> resultsList = decodedData['results'];
-          return resultsList.map((json) => _parseVideo(json)).toList();
-        } else if (decodedData is List) {
-          // Direct array response
-          return decodedData.map((json) => _parseVideo(json)).toList();
-        } else if (decodedData is Map && decodedData.containsKey('videos')) {
-          // Response with videos key
-          final List<dynamic> videoList = decodedData['videos'];
-          return videoList.map((json) => _parseVideo(json)).toList();
+        // Check if the response has the expected structure
+        if (jsonResponse['status'] == 'success' && jsonResponse['results'] != null) {
+          final List<dynamic> videosJson = jsonResponse['results'];
+          
+          print('🔍 Found ${videosJson.length} videos to parse');
+          
+          // Convert each video JSON to VideoData object with error handling
+          List<VideoData> videos = [];
+          
+          for (int i = 0; i < videosJson.length; i++) {
+            try {
+              final videoJson = videosJson[i];
+              print('📝 Parsing video $i: ${videoJson['_id']}');
+              
+              // Debug the problematic fields
+              print('   - sponsors type: ${videoJson['sponsors'].runtimeType}, value: ${videoJson['sponsors']}');
+              print('   - tags type: ${videoJson['tags'].runtimeType}, value: ${videoJson['tags']}');
+              
+              final video = VideoData.fromJson(videoJson);
+              videos.add(video);
+              print('   ✅ Successfully parsed video: ${video.title}');
+            } catch (e) {
+              print('   ❌ Error parsing video $i: $e');
+              // Continue with other videos even if one fails
+            }
+          }
+          
+          print('✅ Successfully parsed ${videos.length} out of ${videosJson.length} videos');
+          return videos;
         } else {
-          print('Unexpected response format: $decodedData');
+          print('❌ Unexpected response structure: ${jsonResponse['status']}');
           return [];
         }
       } else {
-        throw Exception('Failed to load videos: ${response.statusCode} - ${response.body}');
+        print('❌ API Error: ${response.statusCode} - ${response.body}');
+        throw Exception('Failed to load videos: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error fetching videos: $e');
+      print('❌ Exception in fetchCourtVideos: $e');
       throw Exception('Error fetching videos: $e');
     }
   }
-
-  // Client-side helper method to filter videos by time slot - sadly doesn't work :(
-  static List<VideoData> filterVideosByTimeSlot(List<VideoData> videos, TimeOfDay selectedTime) {
-    final targetHour = selectedTime.hour;
-    
-    return videos.where((video) {
-      // Parse the video title or timestamp to extract the hour
-      // Assuming your video titles contain timestamp like "2025-06-17T19:39:38"
-      try {
-        // Extract timestamp from title (you might need to adjust this parsing logic)
-        final title = video.title;
-        final timestampMatch = RegExp(r'(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})').firstMatch(title);
-        
-        if (timestampMatch != null) {
-          final timestamp = timestampMatch.group(1)!;
-          final dateTime = DateTime.parse(timestamp);
-          
-          // Check if video hour matches selected time slot
-          return dateTime.hour == targetHour;
-        }
-        
-        // If no timestamp found, you might have other fields to check
-        // For example, if you have a 'recordedAt' field in your video data
-        return false;
-      } catch (e) {
-        print('Error parsing video timestamp: $e');
-        return false;
-      }
-    }).toList();
-  }
-
-  // Alternative filtering method if you have a different timestamp field
-  static List<VideoData> filterVideosByTimeSlotAlternative(List<VideoData> videos, TimeOfDay selectedTime) {
-    final targetHour = selectedTime.hour;
-    
-    return videos.where((video) {
-      // If your VideoData model has a DateTime field (like createdAt, recordedAt, etc.)
-      // You would check that field instead of parsing the title
-      
-      // For now, let's assume you parse from title
-      try {
-        // Look for hour pattern in title (like "19:39:38")
-        final timeMatch = RegExp(r'T(\d{2}):').firstMatch(video.title);
-        if (timeMatch != null) {
-          final hour = int.parse(timeMatch.group(1)!);
-          return hour == targetHour;
-        }
-        return false;
-      } catch (e) {
-        print('Error parsing video time: $e');
-        return false;
-      }
-    }).toList();
-  }
-
 
   // Parse JSON into Club object
   static Club _parseClubs(Map<String, dynamic> json) {
@@ -249,21 +207,6 @@ class ApiService {
       id: json['_id'] ?? json['id'] ?? '',
       name: json['name'] ?? 'Unknown Court',
       clubId: json['clubId'] ?? json['club_id'] ?? '',
-    );
-  }
-  
-  // Parse JSON into VideoData object
-  static VideoData _parseVideo(Map<String, dynamic> json) {
-    return VideoData(
-      id: json['_id'] ?? json['id'] ?? '',
-      title: json['title'] ?? 'Untitled Video',
-      thumbnailUrl: '', // No thumbnail in API response
-      videoUrl: '', // No video URL in API response
-      duration: '00:00', // No duration in API response
-      courtId: json['courtId'] ?? '',
-      description: json['description'] ?? '',
-      sponsors: json['sponsors'] ?? [],
-      tags: json['tags'] ?? '',
     );
   }
 }

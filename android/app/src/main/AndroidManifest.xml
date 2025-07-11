@@ -8,7 +8,7 @@
     <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
 
     <application
-        android:label="send_it_mobile"
+        android:label="SEND-IT"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
