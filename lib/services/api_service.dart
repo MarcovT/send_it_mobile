@@ -31,7 +31,6 @@ class ApiService {
         throw Exception('Failed to load nearby clubs: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error fetching nearby clubs: $e');
       throw Exception('Error fetching nearby clubs: $e');
     }
   }

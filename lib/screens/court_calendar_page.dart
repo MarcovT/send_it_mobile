@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:send_it_mobile/screens/video_player_screen.dart';
 import 'package:table_calendar/table_calendar.dart';
 import '../models/clubs.dart';
 import '../models/court.dart';
@@ -166,9 +167,8 @@ class _CourtCalendarPageState extends State<CourtCalendarPage> {
                     IconButton(
                       icon: Icon(Icons.play_circle, color: Colors.blue.shade600),
                       onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Playing ${widget.court.name} at $timeDisplay')),
-                        );
+                        print("Playing video: ${video.title}");
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => VideoPlayerScreen(video: video)));
                       },
                     ),
                   ],
