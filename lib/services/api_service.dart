@@ -6,8 +6,9 @@ import '../models/court.dart';
 import '../models/video_data.dart';
 
 class ApiService {
-  static const String baseUrl = 'http://192.168.3.208:3000/api';
-  
+  // static const String baseUrl = 'https://send-it-server-xot5.onrender.com/api';
+     static const String baseUrl = 'http://192.168.3.208:3000/api';
+
   // Fetch nearby clubs based on user location
   static Future<List<Club>> fetchNearbyClubsAll(double latitude, double longitude) async {
     try {
@@ -123,6 +124,7 @@ class ApiService {
       throw Exception('Error fetching courts: $e');
     }
   }
+
    static Future<List<VideoData>> fetchCourtVideos(String courtId, String dateString) async {
     try {
       // Build the correct URL based on your Postman example

@@ -1,5 +1,3 @@
-// Create this file: lib/screens/test_video_player_screen.dart
-
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 import '../models/video_data.dart';
@@ -31,12 +29,13 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
 
   Future<void> _initializeVideoPlayer() async {
     try {
-      print('🎬 Initializing test video player for: ${widget.video.title}');
-      
-      //Network URL Just to test video player. Will update this once myself and Marco figure out the whole API routes.
-      _controller = VideoPlayerController.networkUrl(
-        Uri.parse('https://www.sample-videos.com/video321/mp4/720/big_buck_bunny_720p_1mb.mp4')
-      );
+      final videoUrl = widget.video.streamingUrl;
+      print('🎬 Loading video from: $videoUrl');
+      print('📋 Video ID: ${widget.video.id}');
+      print('🏟️ Court: ${widget.video.courtId}');
+
+      //Create url with the desired videoUrl.
+      _controller = VideoPlayerController.networkUrl(Uri.parse(videoUrl));
       
       await _controller!.initialize();
       

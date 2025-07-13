@@ -23,6 +23,8 @@ class VideoData {
     this.createdAt,
   });
 
+  String get streamingUrl => 'http://192.168.3.208:3000/api/videos/serve-video/$id';
+
   // Factory constructor to create VideoData from API JSON
   factory VideoData.fromJson(Map<String, dynamic> json) {
     // Helper function to safely convert any type to string

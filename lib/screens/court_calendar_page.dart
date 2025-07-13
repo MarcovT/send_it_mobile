@@ -113,14 +113,42 @@ class _CourtCalendarPageState extends State<CourtCalendarPage> {
       );
     }
 
+    // Get the time range for display
+    String getTimeRangeDisplay() {
+      switch (_selectedTimePeriod) {
+        case 'Morning':
+          return 'Morning (06:00-12:00)';
+        case 'Afternoon':
+          return 'Afternoon (12:00-18:00)';
+        case 'Evening':
+          return 'Evening (18:00-24:00)';
+        default:
+          return 'All Day';
+      }
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
           padding: const EdgeInsets.all(16.0),
-          child: Text(
-            'Available Sessions (${_videos.length})',
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Available videos: (${_videos.length})',
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                getTimeRangeDisplay(),
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.blue.shade600,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
           ),
         ),
         // scrollable video list
@@ -182,15 +210,15 @@ class _CourtCalendarPageState extends State<CourtCalendarPage> {
     );
   }
 
-  // Time toggle buttons widget
+  // Time toggle buttons widget with simplified labels
   Widget _buildTimeToggleButtons() {
     final List<Map<String, dynamic>> timeOptions = [
-      {'label': 'All\nDay', 'icon': Icons.all_inclusive},
-      {'label': 'Morning\n6AM-12PM', 'icon': Icons.wb_sunny},
-      {'label': 'Afternoon\n12AM-6PM', 'icon': Icons.wb_sunny_outlined},
-      {'label': 'Evening\n6AM-12PM', 'icon': Icons.brightness_3},
+      {'label': 'All Day', 'icon': Icons.all_inclusive},
+      {'label': 'Morning', 'icon': Icons.wb_sunny},
+      {'label': 'Afternoon', 'icon': Icons.wb_sunny_outlined},
+      {'label': 'Evening', 'icon': Icons.brightness_3},
     ];
-
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -219,7 +247,7 @@ class _CourtCalendarPageState extends State<CourtCalendarPage> {
                     },
                     icon: Icon(
                       option['icon'],
-                      size: 16,
+                      size: 14,
                       color: isSelected ? Colors.white : Colors.blue.shade600,
                     ),
                     label: Text(
@@ -228,10 +256,11 @@ class _CourtCalendarPageState extends State<CourtCalendarPage> {
                         fontSize: 12,
                         color: isSelected ? Colors.white : Colors.blue.shade600,
                       ),
+                      textAlign: TextAlign.center,
                     ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: isSelected ? Colors.blue.shade600 : Colors.blue.shade50,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
@@ -298,9 +327,9 @@ class _CourtCalendarPageState extends State<CourtCalendarPage> {
     }
   }
 
-  // Filter videos by time period
+  // Filter videos by time period with simplified labels
   void _filterByTimePeriod(String period) {
-    if (period == 'All\nDay') {
+    if (period == 'All Day') {
       _fetchVideosForDate(_selectedDay);
       return;
     }
@@ -311,17 +340,17 @@ class _CourtCalendarPageState extends State<CourtCalendarPage> {
       int endHour = 24;
       
       switch (period) {
-        case 'Morning\n6AM-12PM':
+        case 'Morning':
           startHour = 6;
           endHour = 12;
           break;
-        case 'Afternoon\n12AM-6PM':
+        case 'Afternoon':
           startHour = 12;
           endHour = 18;
           break;
-        case 'Evening\n6AM-12PM':
+        case 'Evening':
           startHour = 18;
-          endHour = 22;
+          endHour = 24;
           break;
       }
       
