@@ -22,7 +22,7 @@ class VideoData {
     required this.tags,
     this.createdAt,
   });
-
+  //String get streamingUrl => 'https://send-it-server-xot5.onrender.com/api/videos/serve-video/$id';
   String get streamingUrl => 'http://192.168.3.208:3000/api/videos/serve-video/$id';
 
   // Factory constructor to create VideoData from API JSON

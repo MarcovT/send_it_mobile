@@ -70,7 +70,6 @@ class _HomePageState extends State<HomePage> {
       serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
         // Location services are not enabled, use default location
-        print('Location services are disabled, using default location');
         _currentPosition = Position(
           latitude: -28.749965,
           longitude: 24.740717,
@@ -91,7 +90,6 @@ class _HomePageState extends State<HomePage> {
         permission = await Geolocator.requestPermission();
         if (permission == LocationPermission.denied) {
           // Permissions are denied, use default location
-          print('Location permissions are denied, using default location');
           _currentPosition = Position(
             latitude: -28.749965,
             longitude: 24.740717,
@@ -110,7 +108,6 @@ class _HomePageState extends State<HomePage> {
 
       if (permission == LocationPermission.deniedForever) {
         // Permissions are denied forever, use default location
-        print('Location permissions are permanently denied, using default location');
         _currentPosition = Position(
           latitude: -28.749965,
           longitude: 24.740717,
@@ -138,9 +135,7 @@ class _HomePageState extends State<HomePage> {
         _currentPosition = position;
       });
       
-      print('Location obtained: ${position.latitude}, ${position.longitude}');
     } catch (e) {
-      print('Error determining position: $e, using default location');
       // Use default location if there's an error we need to make a default maybe middle BFN/CT/JHB?
       _currentPosition = Position(
         latitude: -28.749965,
@@ -169,9 +164,7 @@ class _HomePageState extends State<HomePage> {
         // Use current position if available, otherwise use default
         final latitude = _currentPosition?.latitude ?? -28.749965;
         final longitude = _currentPosition?.longitude ?? 24.740717;
-        
-        print('Fetching nearby clubs with location: $latitude, $longitude');
-        
+                
         // Fetch nearby clubs with location
         final clubs = await ApiService.fetchNearbyClubsAll(latitude, longitude);
         setState(() {

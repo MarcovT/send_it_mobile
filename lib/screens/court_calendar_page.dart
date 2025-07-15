@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:intl/intl.dart';
 import 'package:send_it_mobile/screens/video_player_screen.dart';
-import 'package:table_calendar/table_calendar.dart';
+import 'package:calendar_date_picker2/calendar_date_picker2.dart';
 import '../models/clubs.dart';
 import '../models/court.dart';
 import '../models/video_data.dart';
@@ -22,12 +23,47 @@ class CourtCalendarPage extends StatefulWidget {
 }
 
 class _CourtCalendarPageState extends State<CourtCalendarPage> {
-  CalendarFormat _calendarFormat = CalendarFormat.month;
   DateTime _selectedDay = DateTime.now();
-  DateTime _focusedDay = DateTime.now();
   String _selectedTimePeriod = 'All Day';
   bool _isLoadingVideos = false;
   List<VideoData> _videos = [];
+  List<DateTime?> _selectedDates = [DateTime.now()];
+  bool _isCalendarExpanded = true; // Track calendar expansion state
+  final ScrollController _scrollController = ScrollController();
+  
+  @override
+  void initState() {
+    super.initState();
+    // Add listener to scroll controller
+    _scrollController.addListener(_scrollListener);
+    
+    // Initial fetch of videos
+    _fetchVideosForDate(_selectedDay);
+  }
+  
+  @override
+  void dispose() {
+    _scrollController.removeListener(_scrollListener);
+    _scrollController.dispose();
+    super.dispose();
+  }
+  
+  // Scroll listener to collapse calendar on scroll
+  void _scrollListener() {
+    // If scrolling down collapse calendar
+    if (_scrollController.position.userScrollDirection == ScrollDirection.reverse && 
+        _isCalendarExpanded) {
+      setState(() {
+        _isCalendarExpanded = false;
+      });
+    } 
+    // If at the top and scrolling up, expand calendar
+    else if (_scrollController.position.pixels <= 0 && !_isCalendarExpanded) {
+      setState(() {
+        _isCalendarExpanded = true;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -35,7 +71,20 @@ class _CourtCalendarPageState extends State<CourtCalendarPage> {
       appBar: AppBar(
         title: Text(widget.court.name),
       ),
-      body: SingleChildScrollView(
+      body: GestureDetector(
+        // Add a gesture detector to the entire body to capture pull-down gestures
+        onVerticalDragUpdate: (details) {
+          // If pulling down with enough force and at the top of the list
+          if (details.delta.dy > 5 && 
+              _scrollController.position.pixels <= 0 &&
+              !_isCalendarExpanded) {
+            setState(() {
+              _isCalendarExpanded = true;
+            });
+          }
+        },
+        child: SingleChildScrollView(
+          controller: _scrollController, // Add scroll controller here
         child: ConstrainedBox(
           constraints: BoxConstraints(
             minHeight: MediaQuery.of(context).size.height - AppBar().preferredSize.height - MediaQuery.of(context).padding.top,
@@ -43,35 +92,8 @@ class _CourtCalendarPageState extends State<CourtCalendarPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Calendar
-              Card(
-                margin: const EdgeInsets.all(8.0),
-                child: TableCalendar(
-                  firstDay: DateTime.utc(2023, 1, 1),
-                  lastDay: DateTime.utc(2025, 12, 31),
-                  focusedDay: _focusedDay,
-                  calendarFormat: _calendarFormat,
-                  selectedDayPredicate: (day) {
-                    return isSameDay(_selectedDay, day);
-                  },
-                  onDaySelected: (selectedDay, focusedDay) {
-                    setState(() {
-                      _selectedDay = selectedDay;
-                      _focusedDay = focusedDay;
-                      _selectedTimePeriod = 'All Day'; // Reset time selection
-                      _videos = [];
-                    });
-                    print('Date selected:  $selectedDay');
-                    // Automatically fetch all videos for the selected date
-                    _fetchVideosForDate(selectedDay);
-                  },
-                  onFormatChanged: (format) {
-                    setState(() {
-                      _calendarFormat = format;
-                    });
-                  },
-                ),
-              ),
+              // Collapsible Calendar
+              _buildCollapsibleCalendar(),
               // Date display
               Padding(
                 padding: const EdgeInsets.all(16.0),
@@ -90,6 +112,116 @@ class _CourtCalendarPageState extends State<CourtCalendarPage> {
             ],
           ),
         ),
+      ),
+     )
+    );
+  }
+
+  Widget _buildCollapsibleCalendar() {
+    return Card(
+      margin: const EdgeInsets.all(8.0),
+      child: Column(
+        children: [
+          // Calendar header with collapse/expand button
+          InkWell(
+            onTap: () {
+              setState(() {
+                _isCalendarExpanded = !_isCalendarExpanded;
+              });
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Calendar',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Row(
+                    children: [
+                      // Add text hint to indicate swipe gesture
+                      if (!_isCalendarExpanded)
+                        Text(
+                          'Pull down/Touch to expand',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
+                      const SizedBox(width: 8),
+                      AnimatedRotation(
+                        turns: _isCalendarExpanded ? 0.5 : 0,
+                        duration: const Duration(milliseconds: 300),
+                        child: const Icon(Icons.keyboard_arrow_down),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+          // Animated calendar container
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+            height: _isCalendarExpanded ? 400 : 0,
+            child: SingleChildScrollView(
+              // Prevent calendar scrolling from triggering the main scroll
+              physics: const NeverScrollableScrollPhysics(),
+              child: AnimatedOpacity(
+                opacity: _isCalendarExpanded ? 1.0 : 0.0,
+                duration: const Duration(milliseconds: 300),
+                child: CalendarDatePicker2(
+                  config: CalendarDatePicker2Config(
+                    calendarType: CalendarDatePicker2Type.single,
+                    firstDate: DateTime.utc(2023, 1, 1),
+                    lastDate: DateTime.utc(2025, 12, 31),
+                    selectedDayHighlightColor: Theme.of(context).primaryColor,
+                    selectedDayTextStyle: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    todayTextStyle: TextStyle(
+                      color: Theme.of(context).primaryColor,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    weekdayLabelTextStyle: const TextStyle(
+                      color: Colors.black87,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    firstDayOfWeek: 1, // Monday
+                    controlsHeight: 50,
+                    dayTextStyle: const TextStyle(
+                      color: Colors.black87,
+                    ),
+                    disabledDayTextStyle: const TextStyle(
+                      color: Colors.grey,
+                    ),
+                  ),
+                  value: _selectedDates,
+                  onValueChanged: (dates) {
+                    setState(() {
+                      _selectedDates = dates;
+                      if (dates.isNotEmpty) {
+                        _selectedDay = dates.first;
+                        _selectedTimePeriod = 'All Day'; // Reset time selection
+                        _videos = [];
+                      }
+                    });
+                    // Automatically fetch all videos for the selected date
+                    if (dates.isNotEmpty) {
+                      _fetchVideosForDate(dates.first);
+                    }
+                  },
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -155,6 +287,8 @@ class _CourtCalendarPageState extends State<CourtCalendarPage> {
         SizedBox(
           height: 400, // Fixed height to allow scrolling
           child: ListView.builder(
+            // Use default scroll physics to allow scrolling in the list
+            physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.symmetric(horizontal: 16),
             itemCount: _videos.length,
             itemBuilder: (context, index) {
@@ -238,32 +372,38 @@ class _CourtCalendarPageState extends State<CourtCalendarPage> {
               return Expanded(
                 child: Container(
                   margin: const EdgeInsets.only(right: 8),
-                  child: ElevatedButton.icon(
+                  child: ElevatedButton(
                     onPressed: () {
                       setState(() {
                         _selectedTimePeriod = option['label'];
                       });
                       _filterByTimePeriod(option['label']);
                     },
-                    icon: Icon(
-                      option['icon'],
-                      size: 14,
-                      color: isSelected ? Colors.white : Colors.blue.shade600,
-                    ),
-                    label: Text(
-                      option['label'],
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: isSelected ? Colors.white : Colors.blue.shade600,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: isSelected ? Colors.blue.shade600 : Colors.blue.shade50,
                       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          option['icon'],
+                          size: 14,
+                          color: isSelected ? Colors.white : Colors.blue.shade600,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          option['label'],
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: isSelected ? Colors.white : Colors.blue.shade600,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -363,8 +503,6 @@ class _CourtCalendarPageState extends State<CourtCalendarPage> {
       setState(() {
         _videos = filteredVideos;
       });
-      
-      print('Filtered to ${filteredVideos.length} videos for $period');
     });
   }
 }
