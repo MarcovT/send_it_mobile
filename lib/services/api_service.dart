@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'package:path/path.dart' as p;
 import 'package:http/http.dart' as http;
 import '../models/clubs.dart';
 import '../models/court.dart';
@@ -15,9 +14,6 @@ class ApiService {
       final response = await http.get(
         Uri.parse('$baseUrl/clubs/nearby/$latitude/$longitude/10'),
       );
-      
-      print('Clubs Response status: ${response.statusCode}');
-      print('Clubs Response body: ${response.body}');
       
       if (response.statusCode == 200) {
         // Decode the JSON once
@@ -43,8 +39,6 @@ class ApiService {
         Uri.parse('$baseUrl/clubs/'),
       );
       
-      print('All clubs Response status: ${response.statusCode}');
-      print('All clubs Response body: ${response.body}');
       
       if (response.statusCode == 200) {
         // Decode the JSON once
@@ -59,14 +53,12 @@ class ApiService {
           final List<dynamic> results = decodedResponse['results'];
           return results.map((json) => _parseClubs(json)).toList();
         } else {
-          print('Unexpected response format for all clubs: $decodedResponse');
           return [];
         }
       } else {
         throw Exception('Failed to load all clubs: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error fetching all clubs: $e');
       throw Exception('Error fetching all clubs: $e');
     }
   }
@@ -75,19 +67,14 @@ class ApiService {
   static Future<List<Court>> fetchClubCourts(String clubId) async {
     try {
       final url = '$baseUrl/courts'; 
-      print('Fetching all courts from: $url');
       
       final response = await http.get(Uri.parse(url));
-      
-      print('Courts Response status: ${response.statusCode}');
-      print('Courts Response body: ${response.body}');
       
       if (response.statusCode == 200) {
         final responseBody = response.body;
         
         // Handle empty response
         if (responseBody.isEmpty) {
-          print('Empty response body for courts');
           return [];
         }
         
@@ -107,20 +94,16 @@ class ApiService {
           final List<dynamic> courtsList = decodedData['courts'];
           allCourts = courtsList.map((json) => _parseCourt(json)).toList();
         } else {
-          print('Unexpected response format for courts: $decodedData');
           return [];
         }
         
         // Filter courts by clubId
-        final filteredCourts = allCourts.where((court) => court.clubId == clubId).toList();
-        print('Found ${filteredCourts.length} courts for club $clubId');
-        
+        final filteredCourts = allCourts.where((court) => court.clubId == clubId).toList();        
         return filteredCourts;
       } else {
         throw Exception('Failed to load courts: ${response.statusCode} - ${response.body}');
       }
     } catch (e) {
-      print('Error fetching courts: $e');
       throw Exception('Error fetching courts: $e');
     }
   }
@@ -130,18 +113,12 @@ class ApiService {
       // Build the correct URL based on your Postman example
       final String url = '$baseUrl/courts/videos/$courtId/$dateString';
       
-      print('🌐 API URL: $url');
-      
       final response = await http.get(
         Uri.parse(url),
         headers: {
           'Content-Type': 'application/json',
-          // Add any auth headers if needed
         },
       );
-
-      print('📡 Response Status: ${response.statusCode}');
-      print('📄 Response Body: ${response.body}');
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonResponse = json.decode(response.body);
@@ -150,41 +127,28 @@ class ApiService {
         if (jsonResponse['status'] == 'success' && jsonResponse['results'] != null) {
           final List<dynamic> videosJson = jsonResponse['results'];
           
-          print('🔍 Found ${videosJson.length} videos to parse');
-          
           // Convert each video JSON to VideoData object with error handling
           List<VideoData> videos = [];
           
           for (int i = 0; i < videosJson.length; i++) {
             try {
               final videoJson = videosJson[i];
-              print('📝 Parsing video $i: ${videoJson['_id']}');
-              
-              // Debug the problematic fields
-              print('   - sponsors type: ${videoJson['sponsors'].runtimeType}, value: ${videoJson['sponsors']}');
-              print('   - tags type: ${videoJson['tags'].runtimeType}, value: ${videoJson['tags']}');
-              
+            
               final video = VideoData.fromJson(videoJson);
               videos.add(video);
-              print('   ✅ Successfully parsed video: ${video.title}');
             } catch (e) {
-              print('   ❌ Error parsing video $i: $e');
-              // Continue with other videos even if one fails
+              throw Exception('❌ Error parsing video $i: $e');
             }
           }
           
-          print('✅ Successfully parsed ${videos.length} out of ${videosJson.length} videos');
           return videos;
         } else {
-          print('❌ Unexpected response structure: ${jsonResponse['status']}');
           return [];
         }
       } else {
-        print('❌ API Error: ${response.statusCode} - ${response.body}');
         throw Exception('Failed to load videos: ${response.statusCode}');
       }
     } catch (e) {
-      print('❌ Exception in fetchCourtVideos: $e');
       throw Exception('Error fetching videos: $e');
     }
   }
@@ -196,9 +160,6 @@ class ApiService {
       name: json['name'] ?? 'Unknown Club',
       address: json['address'] ?? '',
       distance: (json['distance'] ?? 0.0).toDouble(), 
-      imageUrl: json['destination'] != null && json['filename'] != null 
-          ? p.join(json['destination'], json['filename'])
-          : json['imageUrl'] ?? '',
     );
   }
   
