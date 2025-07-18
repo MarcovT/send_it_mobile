@@ -7,6 +7,7 @@ import '../models/clubs.dart';
 import '../models/court.dart';
 import '../models/video_data.dart';
 import '../services/api_service.dart';
+import '../widgets/video_list_item.dart';
 
 class CourtCalendarPage extends StatefulWidget {
   final Club club;
@@ -28,16 +29,13 @@ class _CourtCalendarPageState extends State<CourtCalendarPage> {
   bool _isLoadingVideos = false;
   List<VideoData> _videos = [];
   List<DateTime?> _selectedDates = [DateTime.now()];
-  bool _isCalendarExpanded = true; // Track calendar expansion state
+  bool _isCalendarExpanded = true;
   final ScrollController _scrollController = ScrollController();
   
   @override
   void initState() {
     super.initState();
-    // Add listener to scroll controller
     _scrollController.addListener(_scrollListener);
-    
-    // Initial fetch of videos
     _fetchVideosForDate(_selectedDay);
   }
   
@@ -48,16 +46,13 @@ class _CourtCalendarPageState extends State<CourtCalendarPage> {
     super.dispose();
   }
   
-  // Scroll listener to collapse calendar on scroll
   void _scrollListener() {
-    // If scrolling down collapse calendar
     if (_scrollController.position.userScrollDirection == ScrollDirection.reverse && 
         _isCalendarExpanded) {
       setState(() {
         _isCalendarExpanded = false;
       });
     } 
-    // If at the top and scrolling up, expand calendar
     else if (_scrollController.position.pixels <= 0 && !_isCalendarExpanded) {
       setState(() {
         _isCalendarExpanded = true;
@@ -68,13 +63,29 @@ class _CourtCalendarPageState extends State<CourtCalendarPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
-        title: Text(widget.court.name),
+        elevation: 0,
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.transparent,
+        leading: IconButton(
+          icon: Icon(
+            Icons.arrow_back,
+            color: Colors.grey.shade600,
+          ),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        title: Text(
+          widget.court.name,
+          style: const TextStyle(
+            color: Colors.black87,
+            fontWeight: FontWeight.w600,
+            fontSize: 18,
+          ),
+        ),
       ),
       body: GestureDetector(
-        // Add a gesture detector to the entire body to capture pull-down gestures
         onVerticalDragUpdate: (details) {
-          // If pulling down with enough force and at the top of the list
           if (details.delta.dy > 5 && 
               _scrollController.position.pixels <= 0 &&
               !_isCalendarExpanded) {
@@ -84,46 +95,41 @@ class _CourtCalendarPageState extends State<CourtCalendarPage> {
           }
         },
         child: SingleChildScrollView(
-          controller: _scrollController, // Add scroll controller here
-        child: ConstrainedBox(
-          constraints: BoxConstraints(
-            minHeight: MediaQuery.of(context).size.height - AppBar().preferredSize.height - MediaQuery.of(context).padding.top,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Collapsible Calendar
-              _buildCollapsibleCalendar(),
-              // Date display
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Text(
-                  'Selected Date: ${DateFormat('EEEE, MMMM d, yyyy').format(_selectedDay)}',
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              // Time filter toggle buttons
-              _buildTimeToggleButtons(),
-              const SizedBox(height: 16),
-              _buildVideosSection(),
-            ],
+          controller: _scrollController,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minHeight: MediaQuery.of(context).size.height - AppBar().preferredSize.height - MediaQuery.of(context).padding.top,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _buildCollapsibleCalendar(),
+                _buildDateDisplay(),
+                _buildTimeToggleButtons(),
+                const SizedBox(height: 16),
+                _buildVideosSection(),
+              ],
+            ),
           ),
         ),
       ),
-     )
     );
   }
 
   Widget _buildCollapsibleCalendar() {
-    return Card(
-      margin: const EdgeInsets.all(8.0),
+    return Container(
+      margin: const EdgeInsets.all(12.0),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(
+          color: Colors.grey.shade200,
+          width: 1,
+        ),
+        borderRadius: BorderRadius.circular(12),
+      ),
       child: Column(
         children: [
-          // Calendar header with collapse/expand button
-          InkWell(
+          GestureDetector(
             onTap: () {
               setState(() {
                 _isCalendarExpanded = !_isCalendarExpanded;
@@ -138,12 +144,12 @@ class _CourtCalendarPageState extends State<CourtCalendarPage> {
                     'Calendar',
                     style: TextStyle(
                       fontSize: 16,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black87,
                     ),
                   ),
                   Row(
                     children: [
-                      // Add text hint to indicate swipe gesture
                       if (!_isCalendarExpanded)
                         Text(
                           'Pull down/Touch to expand',
@@ -156,7 +162,10 @@ class _CourtCalendarPageState extends State<CourtCalendarPage> {
                       AnimatedRotation(
                         turns: _isCalendarExpanded ? 0.5 : 0,
                         duration: const Duration(milliseconds: 300),
-                        child: const Icon(Icons.keyboard_arrow_down),
+                        child: Icon(
+                          Icons.keyboard_arrow_down,
+                          color: Colors.grey.shade600,
+                        ),
                       ),
                     ],
                   ),
@@ -164,13 +173,16 @@ class _CourtCalendarPageState extends State<CourtCalendarPage> {
               ),
             ),
           ),
-          // Animated calendar container
+          if (_isCalendarExpanded)
+            Container(
+              height: 1,
+              color: Colors.grey.shade200,
+            ),
           AnimatedContainer(
             duration: const Duration(milliseconds: 300),
             curve: Curves.easeInOut,
             height: _isCalendarExpanded ? 400 : 0,
             child: SingleChildScrollView(
-              // Prevent calendar scrolling from triggering the main scroll
               physics: const NeverScrollableScrollPhysics(),
               child: AnimatedOpacity(
                 opacity: _isCalendarExpanded ? 1.0 : 0.0,
@@ -180,20 +192,20 @@ class _CourtCalendarPageState extends State<CourtCalendarPage> {
                     calendarType: CalendarDatePicker2Type.single,
                     firstDate: DateTime.utc(2023, 1, 1),
                     lastDate: DateTime.utc(2025, 12, 31),
-                    selectedDayHighlightColor: Theme.of(context).primaryColor,
+                    selectedDayHighlightColor: Colors.indigo,
                     selectedDayTextStyle: const TextStyle(
                       color: Colors.white,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w600,
                     ),
                     todayTextStyle: TextStyle(
-                      color: Theme.of(context).primaryColor,
-                      fontWeight: FontWeight.bold,
+                      color: Colors.indigo.shade600,
+                      fontWeight: FontWeight.w600,
                     ),
                     weekdayLabelTextStyle: const TextStyle(
                       color: Colors.black87,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w600,
                     ),
-                    firstDayOfWeek: 1, // Monday
+                    firstDayOfWeek: 1,
                     controlsHeight: 50,
                     dayTextStyle: const TextStyle(
                       color: Colors.black87,
@@ -208,11 +220,10 @@ class _CourtCalendarPageState extends State<CourtCalendarPage> {
                       _selectedDates = dates;
                       if (dates.isNotEmpty) {
                         _selectedDay = dates.first;
-                        _selectedTimePeriod = 'All Day'; // Reset time selection
+                        _selectedTimePeriod = 'All Day';
                         _videos = [];
                       }
                     });
-                    // Automatically fetch all videos for the selected date
                     if (dates.isNotEmpty) {
                       _fetchVideosForDate(dates.first);
                     }
@@ -226,26 +237,172 @@ class _CourtCalendarPageState extends State<CourtCalendarPage> {
     );
   }
 
+  Widget _buildDateDisplay() {
+    return Container(
+      padding: const EdgeInsets.all(14.0),
+      margin: const EdgeInsets.symmetric(horizontal: 12.0),
+      decoration: BoxDecoration(
+        color: Colors.indigo.shade50,
+        border: Border.all(
+          color: Colors.indigo.shade200,
+          width: 1,
+        ),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.calendar_today,
+            color: Colors.indigo.shade600,
+            size: 20,
+          ),
+          const SizedBox(width: 12),
+          Text(
+            'Selected Date: ${DateFormat('EE, MMMM d, yyyy').format(_selectedDay)}',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: Colors.indigo.shade700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTimeToggleButtons() {
+    final List<Map<String, dynamic>> timeOptions = [
+      {'label': 'All Day', 'icon': Icons.all_inclusive},
+      {'label': 'Morning', 'icon': Icons.wb_sunny},
+      {'label': 'Afternoon', 'icon': Icons.wb_sunny_outlined},
+      {'label': 'Evening', 'icon': Icons.brightness_3},
+    ];
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Padding(
+          padding: EdgeInsets.fromLTRB(16.0,12.0,12.0,12.0),
+          child: Text(
+            'Filter by Time:',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: Colors.black87,
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          child: Row(
+            children: timeOptions.map((option) {
+              final isSelected = _selectedTimePeriod == option['label'];
+              return Expanded(
+                child: Container(
+                  margin: const EdgeInsets.only(right: 8),
+                  child: GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _selectedTimePeriod = option['label'];
+                      });
+                      _filterByTimePeriod(option['label']);
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+                      decoration: BoxDecoration(
+                        color: isSelected ? Colors.indigo : Colors.grey.shade50,
+                        border: Border.all(
+                          color: isSelected ? Colors.indigo : Colors.grey.shade200,
+                          width: 1,
+                        ),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            option['icon'],
+                            size: 16,
+                            color: isSelected ? Colors.white : Colors.grey.shade600,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            option['label'],
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: isSelected ? Colors.white : Colors.grey.shade600,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildVideosSection() {
     if (_isLoadingVideos) {
-      return const Center(
+      return Center(
         child: Padding(
-          padding: EdgeInsets.all(20),
-          child: CircularProgressIndicator(),
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            children: [
+              SizedBox(
+                width: 32,
+                height: 32,
+                child: CircularProgressIndicator(
+                  strokeWidth: 3,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.indigo.shade400),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Loading videos...',
+                style: TextStyle(
+                  color: Colors.grey.shade600,
+                  fontSize: 14,
+                ),
+              ),
+            ],
+          ),
         ),
       );
     }
 
     if (_videos.isEmpty) {
-      return const Center(
+      return Center(
         child: Padding(
-          padding: EdgeInsets.all(20),
-          child: Text('No videos available for this date/Time Period'),
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            children: [
+              Icon(
+                Icons.video_library_outlined,
+                size: 48,
+                color: Colors.grey.shade400,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'No videos available for this date/Time Period',
+                style: TextStyle(
+                  color: Colors.grey.shade600,
+                  fontSize: 16,
+                ),
+              ),
+            ],
+          ),
         ),
       );
     }
 
-    // Get the time range for display
     String getTimeRangeDisplay() {
       switch (_selectedTimePeriod) {
         case 'Morning':
@@ -262,198 +419,102 @@ class _CourtCalendarPageState extends State<CourtCalendarPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
+        Container(
           padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          margin: const EdgeInsets.symmetric(horizontal: 12.0),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border.all(
+              color: Colors.grey.shade200,
+              width: 1,
+            ),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
             children: [
-              Text(
-                'Available videos: (${_videos.length})',
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              Icon(
+                Icons.video_library,
+                color: Colors.grey.shade600,
+                size: 20,
               ),
-              const SizedBox(height: 4),
-              Text(
-                getTimeRangeDisplay(),
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.blue.shade600,
-                  fontWeight: FontWeight.w500,
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Available videos: (${_videos.length})',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.grey.shade700,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      getTimeRangeDisplay(),
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.grey.shade600,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
         ),
-        // scrollable video list
+        const SizedBox(height: 16),
         SizedBox(
-          height: 400, // Fixed height to allow scrolling
+          height: 400,
           child: ListView.builder(
-            // Use default scroll physics to allow scrolling in the list
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.symmetric(horizontal: 16),
             itemCount: _videos.length,
             itemBuilder: (context, index) {
               final video = _videos[index];
               
-              // Extract time from the video data
-              String timeDisplay = 'All Day';
-              if (video.createdAt != null) {
-                timeDisplay = DateFormat('HH:mm').format(video.createdAt!);
-              }
-              
-              return Container(
-                margin: const EdgeInsets.only(bottom: 8),
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.blue.shade50,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.blue.shade200),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.sports_tennis, color: Colors.blue.shade600),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Time: $timeDisplay',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                            ),
-                          ),
-                        ],
-                      ),
+              return VideoListItem(
+                video: video,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => VideoPlayerScreen(video: video),
                     ),
-                    IconButton(
-                      icon: Icon(Icons.play_circle, color: Colors.blue.shade600),
-                      onPressed: () {
-                        print("Playing video: ${video.title}");
-                        Navigator.push(context, MaterialPageRoute(builder: (context) => VideoPlayerScreen(video: video)));
-                      },
-                    ),
-                  ],
-                ),
+                  );
+                },
               );
             },
           ),
         ),
-        const SizedBox(height: 20), // Bottom spacing
+        const SizedBox(height: 20),
       ],
     );
   }
 
-  // Time toggle buttons widget with simplified labels
-  Widget _buildTimeToggleButtons() {
-    final List<Map<String, dynamic>> timeOptions = [
-      {'label': 'All Day', 'icon': Icons.all_inclusive},
-      {'label': 'Morning', 'icon': Icons.wb_sunny},
-      {'label': 'Afternoon', 'icon': Icons.wb_sunny_outlined},
-      {'label': 'Evening', 'icon': Icons.brightness_3},
-    ];
-    
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16.0),
-          child: Text(
-            'Filter by Time:',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-          ),
-        ),
-        const SizedBox(height: 12),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: Row(
-            children: timeOptions.map((option) {
-              final isSelected = _selectedTimePeriod == option['label'];
-              return Expanded(
-                child: Container(
-                  margin: const EdgeInsets.only(right: 8),
-                  child: ElevatedButton(
-                    onPressed: () {
-                      setState(() {
-                        _selectedTimePeriod = option['label'];
-                      });
-                      _filterByTimePeriod(option['label']);
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: isSelected ? Colors.blue.shade600 : Colors.blue.shade50,
-                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          option['icon'],
-                          size: 14,
-                          color: isSelected ? Colors.white : Colors.blue.shade600,
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          option['label'],
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: isSelected ? Colors.white : Colors.blue.shade600,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              );
-            }).toList(),
-          ),
-        ),
-      ],
-    );
-  }
-
-  // Fetch all videos for a selected date (no time filtering)
   Future<void> _fetchVideosForDate(DateTime date) async {
     String dateOnly = date.toIso8601String().split('T')[0];
-    print('🔍 Starting to fetch videos for date: $dateOnly');
-    print('🏟️ Court ID: ${widget.court.id}');
-    
     setState(() {
       _isLoadingVideos = true;
     });
 
     try {
-      // Fetch all videos for the selected date (pass only date part)
       final allVideosForDate = await ApiService.fetchCourtVideos(
         widget.court.id,
         dateOnly,
       );
-      
-      print('✅ Successfully fetched ${allVideosForDate.length} videos');
-      
-      // Debug: Print first few video titles if available
-      if (allVideosForDate.isNotEmpty) {
-        print('📹 First video: ${allVideosForDate[0].title}');
-        if (allVideosForDate.length > 1) {
-          print('📹 Second video: ${allVideosForDate[1].title}');
-        }
-      }
-      
+  
       setState(() {
         _videos = allVideosForDate;
         _isLoadingVideos = false;
       });
       
-      print('🎯 State updated - videos list length: ${_videos.length}');
-      
     } catch (e) {
-      print('❌ Error fetching videos: $e');
       setState(() {
         _isLoadingVideos = false;
-        _videos = []; // Clear videos on error
+        _videos = [];
       });
       
       if (mounted) {
@@ -467,14 +528,12 @@ class _CourtCalendarPageState extends State<CourtCalendarPage> {
     }
   }
 
-  // Filter videos by time period with simplified labels
   void _filterByTimePeriod(String period) {
     if (period == 'All Day') {
       _fetchVideosForDate(_selectedDay);
       return;
     }
     
-    // Get all videos first, then filter
     _fetchVideosForDate(_selectedDay).then((_) {
       int startHour = 0;
       int endHour = 24;

@@ -46,32 +46,57 @@ class _CourtPageState extends State<CourtPage> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-        appBar: AppBar(
-          title: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(widget.club.name),
-              Text(
-                'Select a Court',
-                style: TextStyle(fontSize: 14, color: Colors.white70),
-              ),
-            ],
-          ),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.refresh),
-              onPressed: () {
-                _fetchCourts();
-              },
-            ),
-          ],
+ @override
+Widget build(BuildContext context) {
+  return Scaffold(
+    backgroundColor: Colors.grey.shade50,
+    appBar: AppBar(
+      elevation: 0,
+      backgroundColor: Colors.white,
+      surfaceTintColor: Colors.transparent,
+      leading: IconButton(
+        icon: Icon(
+          Icons.arrow_back,
+          color: Colors.grey.shade600,
         ),
-      body: _buildBody(),
-    );
-  }
+        onPressed: () => Navigator.of(context).pop(),
+      ),
+      title: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            widget.club.name,
+            style: const TextStyle(
+              fontSize: 18,
+              color: Colors.black87,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          Text(
+            'Select a Court',
+            style: TextStyle(
+              fontSize: 13,
+              color: Colors.grey.shade600,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        IconButton(
+          icon: Icon(
+            Icons.refresh,
+            color: Colors.grey.shade600,
+          ),
+          onPressed: () {
+            _fetchCourts();
+          },
+        ),
+      ],
+    ),
+    body: _buildBody(),
+  );
+}
 
   Widget _buildBody() {
     if (_isLoading) {
@@ -102,7 +127,6 @@ class _CourtPageState extends State<CourtPage> {
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
-                print('Retry button pressed');
                 _fetchCourts();
               },
               child: const Text('Retry'),
@@ -148,9 +172,9 @@ class _CourtPageState extends State<CourtPage> {
           padding: const EdgeInsets.all(16),
           margin: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: Colors.blue.shade50,
+            color: Colors.indigo.shade50,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.blue.shade200),
+            border: Border.all(color: Colors.indigo.shade200),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -159,7 +183,7 @@ class _CourtPageState extends State<CourtPage> {
                 children: [
                   Icon(
                     Icons.location_on,
-                    color: Colors.blue.shade600,
+                    color: Colors.indigo.shade600,
                     size: 20,
                   ),
                   const SizedBox(width: 8),
@@ -167,7 +191,7 @@ class _CourtPageState extends State<CourtPage> {
                     child: Text(
                       widget.club.address,
                       style: TextStyle(
-                        color: Colors.blue.shade800,
+                        color: Colors.indigo.shade800,
                         fontSize: 14,
                       ),
                     ),
@@ -179,14 +203,14 @@ class _CourtPageState extends State<CourtPage> {
                 children: [
                   Icon(
                     Icons.sports_tennis,
-                    color: Colors.blue.shade600,
+                    color: Colors.indigo.shade600,
                     size: 20,
                   ),
                   const SizedBox(width: 8),
                   Text(
                     '${_courts.length} court${_courts.length == 1 ? '' : 's'} available',
                     style: TextStyle(
-                      color: Colors.blue.shade800,
+                      color: Colors.indigo.shade800,
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
                     ),

@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import '../models/video_data.dart';
+import 'package:image_gallery_saver/image_gallery_saver.dart';
 
 class VideoPlayerScreen extends StatefulWidget {
   final VideoData video;
@@ -97,6 +98,52 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
     setState(() {
       _showShareOverlay = false;
     });
+  }
+
+  Future<void> _downloadVideoToGallery() async {
+    try {
+      setState(() {
+        _isDownloadingForShare = true;
+      });
+
+      _showSnackBar("📥 Downloading video...");
+      
+      final response = await http.get(Uri.parse(widget.video.streamingUrl));
+      
+      if (response.statusCode == 200) {
+        // First save to temporary file
+        final directory = await getTemporaryDirectory();
+        final fileName = 'padel_video_${widget.video.id.substring(0, 8)}.mp4';
+        final filePath = '${directory.path}/$fileName';
+        final file = File(filePath);
+        
+        await file.writeAsBytes(response.bodyBytes);
+        
+        // Then save to gallery
+        final result = await ImageGallerySaver.saveFile(
+          filePath,
+          name: 'padel_video_${widget.video.id.substring(0, 8)}',
+        );
+        
+        setState(() {
+          _isDownloadingForShare = false;
+        });
+        
+        if (result['isSuccess']) {
+          _showSnackBar("✅ Video saved to your Photos app!");
+        } else {
+          throw Exception('Failed to save to gallery');
+        }
+      } else {
+        throw Exception('Failed to download video: ${response.statusCode}');
+      }
+    } catch (e) {
+      setState(() {
+        _isDownloadingForShare = false;
+      });
+      _showSnackBar("❌ Failed to save video: $e");
+      print('Download error details: $e');
+    }
   }
 
   // 📱 Download video to device for sharing
@@ -274,12 +321,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
           ),
           IconButton(
             icon: const Icon(Icons.download, color: Colors.white),
-            onPressed: () async {
-              final videoPath = await _downloadVideoForSharing();
-              if (videoPath != null) {
-                _showSnackBar("✅ Video saved to device!");
-              }
-            },
+            onPressed: _downloadVideoToGallery,
           ),
         ],
       ),
@@ -335,7 +377,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Text(
-                    '📤 Share Amazing Shot',
+                    '📤 Share Video',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -350,7 +392,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
               const SizedBox(height: 8),
               const Text(
                 'Share this 30-second video with friends!',
-                style: TextStyle(color: Colors.grey, fontSize: 14),
+                style: TextStyle(color: Colors.indigo, fontSize: 14),
               ),
               const SizedBox(height: 20),
               
@@ -375,6 +417,12 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                     label: 'Facebook',
                     color: Colors.blue,
                     onTap: _shareToFacebook,
+                  ),
+                  _buildShareButton(
+                    icon: Icons.save_alt,
+                    label: 'Save to Photos',
+                    color: Colors.teal,
+                    onTap: _downloadVideoToGallery,
                   ),
                 ],
               ),
@@ -404,7 +452,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
               const Text(
                 '💡 Tip: Videos are perfect for Instagram Stories!',
                 style: TextStyle(
-                  color: Colors.blue,
+                  color: Colors.indigo,
                   fontSize: 12,
                   fontStyle: FontStyle.italic,
                 ),

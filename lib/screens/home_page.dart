@@ -270,41 +270,68 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
-        title: Text(_searchQuery.isNotEmpty 
-            ? 'Search Results' 
-            : _showNearbyOnly ? 'Nearby Clubs' : 'All Clubs'),
+        elevation: 0,
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.transparent,
+        title: Text(
+          _searchQuery.isNotEmpty 
+              ? 'Search Results' 
+              : _showNearbyOnly ? 'Nearby Clubs' : 'All Clubs',
+          style: const TextStyle(
+            color: Colors.black87,
+            fontWeight: FontWeight.w600,
+            fontSize: 18,
+          ),
+        ),
         actions: [
           // Search icon
           IconButton(
-            icon: Icon(_searchQuery.isNotEmpty ? Icons.clear : Icons.search),
+            icon: Icon(
+              _searchQuery.isNotEmpty ? Icons.clear : Icons.search,
+              color: Colors.grey.shade600,
+            ),
             onPressed: _searchQuery.isNotEmpty ? _clearSearch : null,
           ),
           // Toggle switch (only show when not searching)
           if (_searchQuery.isEmpty) ...[
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'Nearby',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: _showNearbyOnly ? const Color.fromARGB(255, 201, 224, 242) : const Color.fromARGB(255, 244, 244, 244),
-                    fontWeight: _showNearbyOnly ? FontWeight.bold : FontWeight.normal,
+            Container(
+              margin: const EdgeInsets.only(right: 2),
+              padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 6),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Nearby',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: _showNearbyOnly ? Colors.indigo.shade700 : Colors.grey.shade600,
+                      fontWeight: _showNearbyOnly ? FontWeight.w600 : FontWeight.w500,
+                    ),
                   ),
-                ),
-                Switch(
-                  value: _showNearbyOnly,
-                  onChanged: (value) => _toggleNearbyMode(),
-                  activeColor: const Color.fromARGB(255, 201, 224, 242),
-                ),
-              ],
+                  Transform.scale(
+                    scale: 0.8,
+                    child: Switch(
+                      value: _showNearbyOnly,
+                      onChanged: (value) => _toggleNearbyMode(),
+                      activeColor: Colors.indigo,
+                      activeTrackColor: Colors.indigo.shade100,
+                      inactiveThumbColor: Colors.grey.shade400,
+                      inactiveTrackColor: Colors.grey.shade200,
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
           IconButton(
-            icon: const Icon(Icons.refresh),
+            icon: Icon(
+              Icons.refresh,
+              color: Colors.grey.shade600,
+            ),
             onPressed: () {
-              print('Refresh button pressed');
               _refreshClubs();
             },
           ),
@@ -314,28 +341,72 @@ class _HomePageState extends State<HomePage> {
         children: [
           // Search bar
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+            color: Colors.white,
             child: TextField(
               controller: _searchController,
               decoration: InputDecoration(
-                hintText: 'Search clubs by name, location, or area...',
-                prefixIcon: const Icon(Icons.search),
+                hintText: 'Search',
+                hintStyle: TextStyle(
+                  color: Colors.grey.shade500,
+                  fontSize: 15,
+                ),
+                prefixIcon: Icon(
+                  Icons.search,
+                  color: Colors.grey.shade500,
+                  size: 20,
+                ),
                 suffixIcon: _searchQuery.isNotEmpty
                     ? IconButton(
-                        icon: const Icon(Icons.clear),
+                        icon: Icon(
+                          Icons.clear,
+                          color: Colors.grey.shade500,
+                          size: 20,
+                        ),
                         onPressed: _clearSearch,
                       )
-                    : Icon(Icons.tune, color: Colors.grey[400]),
+                    : null,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(
+                    color: Colors.grey.shade300,
+                    width: 1,
+                  ),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(
+                    color: Colors.grey.shade300,
+                    width: 1,
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(
+                    color: Colors.indigo.shade200,
+                    width: 2,
+                  ),
                 ),
                 filled: true,
-                fillColor: Colors.grey[50],
+                fillColor: Colors.grey.shade50,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+              ),
+              style: const TextStyle(
+                fontSize: 15,
+                color: Colors.black87,
               ),
               onChanged: (query) {
                 _onSearchChanged(query);
               },
             ),
+          ),
+          // Divider
+          Container(
+            height: 1,
+            color: Colors.grey.shade200,
           ),
           // Body content
           Expanded(child: _buildBody()),
@@ -352,8 +423,28 @@ class _HomePageState extends State<HomePage> {
 
     // Show normal nearby/all clubs
     if (_isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(),
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            SizedBox(
+              width: 32,
+              height: 32,
+              child: CircularProgressIndicator(
+                strokeWidth: 3,
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.indigo.shade400),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Loading clubs...',
+              style: TextStyle(
+                color: Colors.grey.shade600,
+                fontSize: 15,
+              ),
+            ),
+          ],
+        ),
       );
     }
 
@@ -362,18 +453,26 @@ class _HomePageState extends State<HomePage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            Icon(
+              Icons.error_outline,
+              size: 48,
+              color: Colors.red.shade400,
+            ),
+            const SizedBox(height: 16),
             Text(
               _errorMessage,
               textAlign: TextAlign.center,
-              style: const TextStyle(color: Colors.red),
+              style: TextStyle(
+                color: Colors.red.shade600,
+                fontSize: 15,
+              ),
             ),
             const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () {
-                print('Retry button pressed');
-                _refreshClubs();
-              },
-              child: const Text('Retry'),
+            _buildActionButton(
+              'Retry',
+              Icons.refresh,
+              _refreshClubs,
+              Colors.indigo,
             ),
           ],
         ),
@@ -390,21 +489,23 @@ class _HomePageState extends State<HomePage> {
           children: [
             Icon(
               Icons.location_off,
-              size: 64,
-              color: Colors.grey[400],
+              size: 48,
+              color: Colors.grey.shade400,
             ),
             const SizedBox(height: 16),
             Text(
               _showNearbyOnly ? 'No clubs found nearby.' : 'No clubs found.',
               style: TextStyle(
                 fontSize: 16,
-                color: Colors.grey[600],
+                color: Colors.grey.shade600,
               ),
             ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _refreshClubs,
-              child: const Text('Refresh'),
+            const SizedBox(height: 20),
+            _buildActionButton(
+              'Refresh',
+              Icons.refresh,
+              _refreshClubs,
+              Colors.indigo,
             ),
           ],
         ),
@@ -416,30 +517,32 @@ class _HomePageState extends State<HomePage> {
         // Info banner
         Container(
           width: double.infinity,
-          padding: const EdgeInsets.all(12),
-          margin: const EdgeInsets.all(8),
+          padding: const EdgeInsets.all(14),
+          margin: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: _showNearbyOnly ? Colors.blue.shade50 : Colors.grey.shade50,
-            borderRadius: BorderRadius.circular(8),
+            color: _showNearbyOnly ? Colors.indigo.shade50 : Colors.grey.shade50,
+            borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: _showNearbyOnly ? Colors.blue.shade200 : Colors.grey.shade200,
+              color: _showNearbyOnly ? Colors.indigo.shade200 : Colors.grey.shade200,
+              width: 1,
             ),
           ),
           child: Row(
             children: [
               Icon(
                 _showNearbyOnly ? Icons.location_on : Icons.list,
-                color: _showNearbyOnly ? Colors.blue : Colors.grey.shade600,
+                color: _showNearbyOnly ? Colors.indigo.shade600 : Colors.grey.shade600,
                 size: 20,
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 10),
               Text(
                 _showNearbyOnly 
                     ? 'Showing ${currentClubs.length} clubs near you'
                     : 'Showing all ${currentClubs.length} clubs',
                 style: TextStyle(
-                  color: _showNearbyOnly ? Colors.blue.shade800 : Colors.grey.shade700,
+                  color: _showNearbyOnly ? Colors.indigo.shade700 : Colors.grey.shade700,
                   fontWeight: FontWeight.w500,
+                  fontSize: 14,
                 ),
               ),
             ],
@@ -448,6 +551,7 @@ class _HomePageState extends State<HomePage> {
         // Clubs list
         Expanded(
           child: ListView.builder(
+            padding: const EdgeInsets.only(bottom: 16),
             itemCount: currentClubs.length,
             itemBuilder: (context, index) {
               final club = currentClubs[index];
@@ -471,13 +575,26 @@ class _HomePageState extends State<HomePage> {
 
   Widget _buildSearchResults() {
     if (_isSearching) {
-      return const Center(
+      return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            CircularProgressIndicator(),
-            SizedBox(height: 16),
-            Text('Searching clubs...'),
+            SizedBox(
+              width: 32,
+              height: 32,
+              child: CircularProgressIndicator(
+                strokeWidth: 3,
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.indigo.shade400),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Searching clubs...',
+              style: TextStyle(
+                color: Colors.grey.shade600,
+                fontSize: 15,
+              ),
+            ),
           ],
         ),
       );
@@ -490,21 +607,23 @@ class _HomePageState extends State<HomePage> {
           children: [
             Icon(
               Icons.search_off,
-              size: 64,
-              color: Colors.grey[400],
+              size: 48,
+              color: Colors.grey.shade400,
             ),
             const SizedBox(height: 16),
             Text(
               'No clubs found for "$_searchQuery"',
               style: TextStyle(
                 fontSize: 16,
-                color: Colors.grey[600],
+                color: Colors.grey.shade600,
               ),
             ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _clearSearch,
-              child: const Text('Clear Search'),
+            const SizedBox(height: 20),
+            _buildActionButton(
+              'Clear Search',
+              Icons.clear,
+              _clearSearch,
+              Colors.indigo,
             ),
           ],
         ),
@@ -516,12 +635,15 @@ class _HomePageState extends State<HomePage> {
         // Search results banner
         Container(
           width: double.infinity,
-          padding: const EdgeInsets.all(12),
-          margin: const EdgeInsets.all(8),
+          padding: const EdgeInsets.all(14),
+          margin: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             color: Colors.green.shade50,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Colors.green.shade200),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: Colors.green.shade200,
+              width: 1,
+            ),
           ),
           child: Row(
             children: [
@@ -530,13 +652,14 @@ class _HomePageState extends State<HomePage> {
                 color: Colors.green.shade600,
                 size: 20,
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 10),
               Expanded(
                 child: Text(
                   'Found ${_searchResults.length} clubs for "$_searchQuery"',
                   style: TextStyle(
-                    color: Colors.green.shade800,
+                    color: Colors.green.shade700,
                     fontWeight: FontWeight.w500,
+                    fontSize: 14,
                   ),
                 ),
               ),
@@ -546,6 +669,7 @@ class _HomePageState extends State<HomePage> {
         // Search results list
         Expanded(
           child: ListView.builder(
+            padding: const EdgeInsets.only(bottom: 16),
             itemCount: _searchResults.length,
             itemBuilder: (context, index) {
               final club = _searchResults[index];
@@ -564,6 +688,38 @@ class _HomePageState extends State<HomePage> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildActionButton(String text, IconData icon, VoidCallback onPressed, Color color) {
+    return GestureDetector(
+      onTap: onPressed,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+        decoration: BoxDecoration(
+          color: color,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              color: Colors.white,
+              size: 18,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              text,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+                fontSize: 15,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
