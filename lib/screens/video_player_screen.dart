@@ -7,7 +7,7 @@ import 'package:http/http.dart' as http;
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import '../models/video_data.dart';
-import 'package:image_gallery_saver/image_gallery_saver.dart';
+import 'package:image_gallery_saver_plus/image_gallery_saver_plus.dart';
 
 class VideoPlayerScreen extends StatefulWidget {
   final VideoData video;
@@ -87,12 +87,12 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
       });
     }
   }
-
+/*
   void _showShareOptions() {
     setState(() {
       _showShareOverlay = true;
     });
-  }
+  }*/
 
   void _hideShareOptions() {
     setState(() {
@@ -120,7 +120,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
         await file.writeAsBytes(response.bodyBytes);
         
         // Then save to gallery
-        final result = await ImageGallerySaver.saveFile(
+        final result = await ImageGallerySaverPlus.saveFile(
           filePath,
           name: 'padel_video_${widget.video.id.substring(0, 8)}',
         );
@@ -130,9 +130,9 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
         });
         
         if (result['isSuccess']) {
-          _showSnackBar("✅ Video saved to your Photos app!");
+          _showSnackBar("✅ Video saved!");
         } else {
-          throw Exception('Failed to save to gallery');
+          throw Exception('Failed to save video');
         }
       } else {
         throw Exception('Failed to download video: ${response.statusCode}');
@@ -315,10 +315,10 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
           overflow: TextOverflow.ellipsis,
         ),
         actions: [
-          IconButton(
+          /*IconButton(
             icon: const Icon(Icons.share, color: Colors.white),
             onPressed: _showShareOptions,
-          ),
+          ),*/
           IconButton(
             icon: const Icon(Icons.download, color: Colors.white),
             onPressed: _downloadVideoToGallery,
@@ -482,7 +482,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: color.withOpacity(0.3),
+                  color: color.withValues(alpha:0.3),
                   blurRadius: 8,
                   offset: const Offset(0, 4),
                 ),

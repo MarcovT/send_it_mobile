@@ -46,7 +46,7 @@ dependencies:
   url_launcher: ^6.2.4
   path_provider: ^2.1.1
   calendar_date_picker2: ^1.0.5
-  image_gallery_saver: ^2.0.3
+  image_gallery_saver_plus: ^4.0.1
 
 dev_dependencies:
   flutter_launcher_icons: ^0.13.1
