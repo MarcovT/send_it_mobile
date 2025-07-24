@@ -52,8 +52,14 @@ class _HomePageState extends State<HomePage> {
   // Load all clubs for local search
   Future<void> _loadAllClubs() async {
     try {
-      await ClubSearchService.loadAllClubs();
-      print('Clubs loaded for local search');
+      final latitude = _currentPosition?.latitude;
+      final longitude = _currentPosition?.longitude;
+      
+      await ClubSearchService.loadAllClubs(
+        latitude: latitude, 
+        longitude: longitude
+      );
+      print('Clubs loaded for local search with location data');
     } catch (e) {
       print('Error loading clubs: $e');
       // Continue anyway - we can still use API-based approaches
@@ -160,11 +166,11 @@ class _HomePageState extends State<HomePage> {
     });
 
     try {
-      if (_showNearbyOnly) {
         // Use current position if available, otherwise use default
         final latitude = _currentPosition?.latitude ?? -28.749965;
         final longitude = _currentPosition?.longitude ?? 24.740717;
-                
+         
+      if (_showNearbyOnly) {       
         // Fetch nearby clubs with location
         final clubs = await ApiService.fetchNearbyClubsAll(latitude, longitude);
         setState(() {
@@ -172,9 +178,10 @@ class _HomePageState extends State<HomePage> {
           _isLoading = false;
         });
       } else {
+
         // Fetch all clubs -> I am going to change this and the API functions to just use one. We can just autopopulate with the default
         // not sure what you guys think. But when they toggle the button off I want the distances to show if they allowed location permissions.
-        final clubs = await ApiService.fetchAllClubs();
+        final clubs = await ApiService.fetchAllClubs(latitude, longitude);
         setState(() {
           _allClubs = clubs;
           _isLoading = false;
@@ -257,13 +264,20 @@ class _HomePageState extends State<HomePage> {
     // Clear search when refreshing
     _clearSearch();
     
-    // Refresh the local search data
-    await ClubSearchService.refreshClubs();
-    
+    // Update location first if needed
     if (_showNearbyOnly) {
-      // Update location first for nearby mode
       await _determinePosition();
     }
+    
+    // Refresh the local search data with current location
+    final latitude = _currentPosition?.latitude;
+    final longitude = _currentPosition?.longitude;
+    
+    await ClubSearchService.refreshClubs(
+      latitude: latitude,
+      longitude: longitude
+    );
+    
     await _fetchClubs();
   }
 

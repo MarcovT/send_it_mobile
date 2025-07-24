@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import '../models/clubs.dart';
 import '../services/api_service.dart';
 
@@ -6,16 +7,33 @@ class ClubSearchService {
   static bool _isLoaded = false;
   static DateTime? _lastRefresh;
   static const Duration _refreshInterval = Duration(hours: 6);
+  static double? _lastLatitude;
+  static double? _lastLongitude;
   
-  // Load all clubs once on app start
-  static Future<void> loadAllClubs() async {
-    if (_isLoaded && _lastRefresh != null && 
-        DateTime.now().difference(_lastRefresh!) < _refreshInterval) {
-      return; // Data is still fresh
+  // Load all clubs once on app start with location data
+  static Future<void> loadAllClubs({double? latitude, double? longitude}) async {
+    // Check if we need to refresh due to location change or time
+    final bool locationChanged = _hasLocationChanged(latitude, longitude);
+    final bool timeExpired = _lastRefresh != null && 
+        DateTime.now().difference(_lastRefresh!) >= _refreshInterval;
+    
+    if (_isLoaded && !locationChanged && !timeExpired) {
+      return; // Data is still fresh and location hasn't changed significantly
     }
     
     try {
-      _allClubs = await ApiService.fetchAllClubs();
+      if (latitude != null && longitude != null) {
+        // Use the new endpoint with location for distance calculations
+        _allClubs = await ApiService.fetchAllClubs(latitude, longitude);
+        _lastLatitude = latitude;
+        _lastLongitude = longitude;
+      } else {
+        // Fallback to original endpoint without location
+        _allClubs = await ApiService.fetchAllClubs();
+        _lastLatitude = null;
+        _lastLongitude = null;
+      }
+      
       _isLoaded = true;
       _lastRefresh = DateTime.now();
       print('Loaded ${_allClubs.length} clubs for local search');
@@ -25,7 +43,48 @@ class ClubSearchService {
     }
   }
   
-  // Advanced search with multiple strategies
+  // Check if location has changed significantly (>1km)
+  static bool _hasLocationChanged(double? newLatitude, double? newLongitude) {
+    if (_lastLatitude == null || _lastLongitude == null) {
+      return newLatitude != null && newLongitude != null;
+    }
+    
+    if (newLatitude == null || newLongitude == null) {
+      return false; // Don't consider it a change if we're going from location to no location
+    }
+    
+    // Calculate distance between old and new location
+    const double significantDistance = 1.0; // 1km threshold
+    final double distance = _calculateDistance(
+      _lastLatitude!, _lastLongitude!, 
+      newLatitude, newLongitude
+    );
+    
+    return distance > significantDistance;
+  }
+  
+  // Simple distance calculation using Haversine formula
+  static double _calculateDistance(double lat1, double lon1, double lat2, double lon2) {
+    const double earthRadius = 6371; // Earth's radius in kilometers
+    
+    final double dLat = _degreesToRadians(lat2 - lat1);
+    final double dLon = _degreesToRadians(lon2 - lon1);
+    
+    final double a = 
+        math.sin(dLat / 2) * math.sin(dLat / 2) +
+        math.cos(_degreesToRadians(lat1)) * math.cos(_degreesToRadians(lat2)) *
+        math.sin(dLon / 2) * math.sin(dLon / 2);
+    
+    final double c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a));
+    
+    return earthRadius * c;
+  }
+  
+  static double _degreesToRadians(double degrees) {
+    return degrees * (math.pi / 180);
+  }
+  
+  // Advanced search with multiple strategies (unchanged core logic)
   static List<Club> searchClubs(String query) {
     if (!_isLoaded || query.isEmpty) return [];
     
@@ -65,7 +124,7 @@ class ClubSearchService {
     return sortedClubs.take(50).map((entry) => entry.key).toList();
   }
   
-  // Exact match scoring
+  // Word-based scoring for multi-word queries (unchanged)
   static double _exactMatchScore(Club club, String query) {
     double score = 0.0;
     final name = club.name.toLowerCase();
@@ -77,7 +136,7 @@ class ClubSearchService {
     return score;
   }
   
-  // Starts with scoring
+  // Starts with scoring (unchanged)
   static double _startsWithScore(Club club, String query) {
     double score = 0.0;
     final name = club.name.toLowerCase();
@@ -101,7 +160,7 @@ class ClubSearchService {
     return score;
   }
   
-  // Contains scoring
+  // Contains scoring (unchanged)
   static double _containsScore(Club club, String query) {
     double score = 0.0;
     final name = club.name.toLowerCase();
@@ -113,7 +172,7 @@ class ClubSearchService {
     return score;
   }
   
-  // Simple fuzzy matching using Levenshtein distance
+  // Simple fuzzy matching using Levenshtein distance (unchanged)
   static double _fuzzyMatchScore(Club club, String query) {
     double score = 0.0;
     final name = club.name.toLowerCase();
@@ -137,7 +196,7 @@ class ClubSearchService {
     return score;
   }
   
-  // Word-based scoring for multi-word queries
+  // Word-based scoring for multi-word queries (unchanged)
   static double _wordBasedScore(Club club, String query) {
     final queryWords = query.split(' ').where((word) => word.isNotEmpty).toList();
     if (queryWords.length < 2) return 0.0;
@@ -162,7 +221,7 @@ class ClubSearchService {
     return score;
   }
   
-  // Calculate Levenshtein distance for fuzzy matching
+  // Calculate Levenshtein distance for fuzzy matching (unchanged)
   static int _levenshteinDistance(String s1, String s2) {
     if (s1.isEmpty) return s2.length;
     if (s2.isEmpty) return s1.length;
@@ -194,25 +253,24 @@ class ClubSearchService {
     return matrix[s1.length][s2.length];
   }
   
-  // Get nearby clubs (for location-based results)
-  static List<Club> getNearbyClubs(double latitude, double longitude, {int limit = 20}) {
+  // Get nearby clubs with improved sorting (now uses distance from Club model)
+  static List<Club> getNearbyClubs({int limit = 20}) {
     if (!_isLoaded) return [];
     
-    // Calculate distance and sort
-    final clubsWithDistance = _allClubs.map((club) {  
-      return MapEntry(club, club.distance);
-    }).toList();
+    // Filter clubs that have distance data and sort by distance
+    final clubsWithDistance = _allClubs
+        .where((club) => club.distance > 0)
+        .toList()
+      ..sort((a, b) => a.distance.compareTo(b.distance));
     
-    clubsWithDistance.sort((a, b) => a.value.compareTo(b.value));
-    
-    return clubsWithDistance.take(limit).map((entry) => entry.key).toList();
+    return clubsWithDistance.take(limit).toList();
   }
   
-  // Force refresh data
-  static Future<void> refreshClubs() async {
+  // Force refresh data with optional location update
+  static Future<void> refreshClubs({double? latitude, double? longitude}) async {
     _isLoaded = false;
     _lastRefresh = null;
-    await loadAllClubs();
+    await loadAllClubs(latitude: latitude, longitude: longitude);
   }
   
   // Get all clubs (for debugging)
@@ -223,4 +281,13 @@ class ClubSearchService {
   
   // Get last refresh time
   static DateTime? get lastRefresh => _lastRefresh;
+  
+  // Get last known location
+  static Map<String, double?> get lastLocation => {
+    'latitude': _lastLatitude,
+    'longitude': _lastLongitude,
+  };
+  
+  // Check if we have location-based data
+  static bool get hasLocationData => _lastLatitude != null && _lastLongitude != null;
 }

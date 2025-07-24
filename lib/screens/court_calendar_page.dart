@@ -181,7 +181,7 @@ class _CourtCalendarPageState extends State<CourtCalendarPage> {
           AnimatedContainer(
             duration: const Duration(milliseconds: 300),
             curve: Curves.easeInOut,
-            height: _isCalendarExpanded ? 400 : 0,
+            height: _isCalendarExpanded ? 300 : 0,
             child: SingleChildScrollView(
               physics: const NeverScrollableScrollPhysics(),
               child: AnimatedOpacity(

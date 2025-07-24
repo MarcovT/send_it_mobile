@@ -32,12 +32,18 @@ class ApiService {
   }
  
   // Fetch all clubs (without location filtering)
-  static Future<List<Club>> fetchAllClubs() async {
+  static Future<List<Club>> fetchAllClubs([double? latitude, double? longitude]) async {
     try {
-      final response = await http.get(
-        Uri.parse('$baseUrl/clubs/'),
-      );
+      String url;
+      if (latitude != null && longitude != null) {
+        // Use location-aware endpoint with large radius to get all clubs with distances
+        url = '$baseUrl/clubs/$latitude/$longitude/1000';
+      } else {
+        // Use original endpoint without location
+        url = '$baseUrl/clubs/';
+      }
       
+      final response = await http.get(Uri.parse(url));
       
       if (response.statusCode == 200) {
         // Decode the JSON once
