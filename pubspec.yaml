@@ -47,6 +47,7 @@ dependencies:
   path_provider: ^2.1.1
   calendar_date_picker2: ^1.0.5
   image_gallery_saver_plus: ^4.0.1
+  flutter_dotenv: ^5.1.0
 
 dev_dependencies:
   flutter_launcher_icons: ^0.13.1
@@ -76,7 +77,8 @@ flutter:
   uses-material-design: true
 
   # To add assets to your application, add an assets section, like this:
-  # assets:
+  assets:
+    - .env
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg
 

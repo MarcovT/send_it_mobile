@@ -1,17 +1,40 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../models/clubs.dart';
 import '../models/court.dart';
 import '../models/video_data.dart';
 
 class ApiService {
-  static const String baseUrl = 'https://api.senditreplays.com:3000/api';
+  // Use environment variables for sensitive data - no fallbacks for security
+  static String get baseUrl {
+    final url = dotenv.env['BASE_URL'];
+    if (url == null || url.isEmpty) {
+      throw Exception('BASE_URL not found in environment variables. Please check your .env file.');
+    }
+    return url;
+  }
+  
+  static String get apiSecret {
+    final secret = dotenv.env['API_SECRET'];
+    if (secret == null || secret.isEmpty) {
+      throw Exception('API_SECRET not found in environment variables. Please check your .env file.');
+    }
+    return secret;
+  }
+
+  // Common headers for all requests
+  static Map<String, String> get _headers => {
+    'Content-Type': 'application/json',
+    'send-it-api-key': apiSecret,
+  };
 
   // Fetch nearby clubs based on user location
   static Future<List<Club>> fetchNearbyClubsAll(double latitude, double longitude) async {
     try {
       final response = await http.get(
         Uri.parse('$baseUrl/clubs/nearby/$latitude/$longitude/10'),
+        headers: _headers,
       );
       
       if (response.statusCode == 200) {
@@ -43,7 +66,10 @@ class ApiService {
         url = '$baseUrl/clubs/';
       }
       
-      final response = await http.get(Uri.parse(url));
+      final response = await http.get(
+        Uri.parse(url),
+        headers: _headers,
+      );
       
       if (response.statusCode == 200) {
         // Decode the JSON once
@@ -73,7 +99,10 @@ class ApiService {
     try {
       final url = '$baseUrl/courts'; 
       
-      final response = await http.get(Uri.parse(url));
+      final response = await http.get(
+        Uri.parse(url),
+        headers: _headers,
+      );
       
       if (response.statusCode == 200) {
         final responseBody = response.body;
@@ -113,16 +142,14 @@ class ApiService {
     }
   }
 
-   static Future<List<VideoData>> fetchCourtVideos(String courtId, String dateString) async {
+  static Future<List<VideoData>> fetchCourtVideos(String courtId, String dateString) async {
     try {
       // Build the correct URL based on your Postman example
       final String url = '$baseUrl/courts/videos/$courtId/$dateString';
       
       final response = await http.get(
         Uri.parse(url),
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: _headers,
       );
 
       if (response.statusCode == 200) {

@@ -41,7 +41,8 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
       final videoUrl = widget.video.streamingUrl;
       print('🎬 Loading video from: $videoUrl');
       
-      _controller = VideoPlayerController.networkUrl(Uri.parse(videoUrl));
+      _controller = VideoPlayerController.networkUrl(Uri.parse(videoUrl),
+        httpHeaders: widget.video.streamingHeaders);
       await _controller!.initialize();
       
       setState(() {
@@ -108,7 +109,10 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
 
       _showSnackBar("📥 Downloading video...");
       
-      final response = await http.get(Uri.parse(widget.video.streamingUrl));
+      final response = await http.get(
+        Uri.parse(widget.video.streamingUrl),
+        headers: widget.video.streamingHeaders,
+      );
       
       if (response.statusCode == 200) {
         // First save to temporary file
@@ -155,7 +159,10 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
 
       _showSnackBar("📥 Preparing video for sharing...");
       
-      final response = await http.get(Uri.parse(widget.video.streamingUrl));
+      final response = await http.get(
+        Uri.parse(widget.video.streamingUrl),
+        headers: widget.video.streamingHeaders,
+      );
       
       if (response.statusCode == 200) {
         final directory = await getTemporaryDirectory();

@@ -28,7 +28,7 @@ class ClubListItem extends StatelessWidget {
         ),
         child: Row(
           children: [
-            // Club image
+            // Club image with authentication
             Container(
               width: 80,
               height: 80,
@@ -43,7 +43,27 @@ class ClubListItem extends StatelessWidget {
                   width: 80,
                   height: 80,
                   fit: BoxFit.cover,
+                  headers: club.imageHeaders, // Add authentication headers
+                  loadingBuilder: (context, child, loadingProgress) {
+                    if (loadingProgress == null) return child;
+                    return Container(
+                      width: 80,
+                      height: 80,
+                      color: Colors.grey.shade100,
+                      child: Center(
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.grey.shade400,
+                          value: loadingProgress.expectedTotalBytes != null
+                              ? loadingProgress.cumulativeBytesLoaded /
+                                  loadingProgress.expectedTotalBytes!
+                              : null,
+                        ),
+                      ),
+                    );
+                  },
                   errorBuilder: (context, error, stackTrace) {
+                    // Enhanced error handling for authentication issues
                     return Container(
                       width: 80,
                       height: 80,
