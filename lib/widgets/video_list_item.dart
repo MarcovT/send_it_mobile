@@ -17,7 +17,8 @@ class VideoListItem extends StatelessWidget {
     // Get time display from video data
     String timeDisplay = 'All Day';
     if (video.createdAt != null) {
-      timeDisplay = DateFormat('HH:mm').format(video.createdAt!);
+
+      timeDisplay = DateFormat('HH:mm').format(video.createdAt!.toLocal());
     }
     
     return GestureDetector(

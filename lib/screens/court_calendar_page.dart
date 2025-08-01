@@ -554,8 +554,9 @@ class _CourtCalendarPageState extends State<CourtCalendarPage> {
       }
       
       final filteredVideos = _videos.where((video) {
-        if (video.createdAt == null) return false;
-        final videoHour = video.createdAt!.hour;
+        final localDateTime = video.createdAt?.toLocal();
+        if (localDateTime == null) return false;
+        final videoHour = localDateTime.hour;
         return videoHour >= startHour && videoHour < endHour;
       }).toList();
       
