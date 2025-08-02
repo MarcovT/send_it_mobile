@@ -36,7 +36,6 @@ class VideoListItem extends StatelessWidget {
         ),
         child: Row(
           children: [
-            // Tennis icon container (or video thumbnail if you implement it)
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
@@ -102,7 +101,7 @@ class VideoListItem extends StatelessWidget {
                   borderRadius: BorderRadius.circular(8),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.indigo.withOpacity(0.3),
+                      color: Colors.indigo.shade300,
                       blurRadius: 4,
                       offset: const Offset(0, 2),
                     ),
@@ -122,7 +121,6 @@ class VideoListItem extends StatelessWidget {
   }
 }
 
-// Optional: If you want to add video thumbnail support later
 class VideoListItemWithThumbnail extends StatelessWidget {
   final VideoData video;
   final VoidCallback onTap;
@@ -155,7 +153,6 @@ class VideoListItemWithThumbnail extends StatelessWidget {
         ),
         child: Row(
           children: [
-            // Video thumbnail (if you implement thumbnail endpoint)
             Container(
               width: 60,
               height: 60,
@@ -166,8 +163,6 @@ class VideoListItemWithThumbnail extends StatelessWidget {
               child: Stack(
                 alignment: Alignment.center,
                 children: [
-                  // You can add thumbnail image here when available
-                  // For now, showing play icon
                   Icon(
                     Icons.play_circle_filled,
                     color: Colors.indigo.shade600,

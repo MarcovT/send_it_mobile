@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:send_it_mobile/services/api_service.dart';
@@ -73,6 +72,7 @@ class _HomePageState extends State<HomePage> {
       builder: (context) => TermsConditionsDialog(
         onAccept: () async {
           await TermsService.acceptTerms();
+          // ignore: use_build_context_synchronously
           Navigator.of(context).pop();
           setState(() {
             _termsAccepted = true;
@@ -141,7 +141,6 @@ class _HomePageState extends State<HomePage> {
         longitude: longitude
       );
     } catch (e) {
-      print('Error loading clubs: $e');
       // Continue anyway - we can still use API-based approaches
     }
   }

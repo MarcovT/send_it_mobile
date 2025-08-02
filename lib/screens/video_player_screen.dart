@@ -39,7 +39,6 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
   Future<void> _initializeVideoPlayer() async {
     try {
       final videoUrl = widget.video.streamingUrl;
-      print('🎬 Loading video from: $videoUrl');
       
       _controller = VideoPlayerController.networkUrl(Uri.parse(videoUrl),
         httpHeaders: widget.video.streamingHeaders);
@@ -52,7 +51,6 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
       _controller!.play();
       
     } catch (e) {
-      print('❌ Error loading video: $e');
       setState(() {
         _isLoading = false;
         _hasError = true;
@@ -134,7 +132,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
         });
         
         if (result['isSuccess']) {
-          _showSnackBar("✅ Video saved!");
+          _showSnackBar("Video saved!");
         } else {
           throw Exception('Failed to save video');
         }
@@ -145,8 +143,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
       setState(() {
         _isDownloadingForShare = false;
       });
-      _showSnackBar("❌ Failed to save video: $e");
-      print('Download error details: $e');
+      _showSnackBar("Failed to save video: $e");
     }
   }
 
@@ -183,7 +180,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
       setState(() {
         _isDownloadingForShare = false;
       });
-      _showSnackBar("❌ Failed to prepare video: $e");
+      _showSnackBar("Failed to prepare video: $e");
       return null;
     }
   }
@@ -200,14 +197,14 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
       await Share.shareXFiles(
         [XFile(videoPath)],
         text: message,
-        subject: "Amazing Padel Shot! 🎾",
+        subject: "Amazing Padel Shot!",
       );
       
       _hideShareOptions();
-      _showSnackBar("✅ Shared to WhatsApp!");
+      _showSnackBar("Shared to WhatsApp!");
       
     } catch (e) {
-      _showSnackBar("❌ Error sharing to WhatsApp: $e");
+      _showSnackBar("Error sharing to WhatsApp: $e");
     }
   }
 
@@ -224,23 +221,23 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
         // Share video file to Instagram Stories
         await Share.shareXFiles(
           [XFile(videoPath)],
-          text: "🎾 Amazing padel shot!",
+          text: "Amazing padel shot!",
         );
         
-        _showSnackBar("✅ Opening Instagram Stories...");
+        _showSnackBar("Opening Instagram Stories...");
       } else {
         // Fallback: Generic share
         await Share.shareXFiles(
           [XFile(videoPath)],
-          text: "🎾 Check out this amazing padel shot!",
+          text: "Check out this amazing padel shot!",
         );
-        _showSnackBar("📱 Instagram not installed, using generic share");
+        _showSnackBar("Instagram not installed, using generic share");
       }
       
       _hideShareOptions();
       
     } catch (e) {
-      _showSnackBar("❌ Error sharing to Instagram: $e");
+      _showSnackBar("Error sharing to Instagram: $e");
     }
   }
 
@@ -253,15 +250,15 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
       // Share video file to Facebook
       await Share.shareXFiles(
         [XFile(videoPath)],
-        text: "🎾 Check out this amazing padel shot from my game!",
-        subject: "Amazing Padel Shot! 🎾",
+        text: "Check out this amazing padel shot from my game!",
+        subject: "Amazing Padel Shot!",
       );
       
       _hideShareOptions();
-      _showSnackBar("✅ Shared to Facebook!");
+      _showSnackBar("Shared to Facebook!");
       
     } catch (e) {
-      _showSnackBar("❌ Error sharing to Facebook: $e");
+      _showSnackBar("Error sharing to Facebook: $e");
     }
   }
 
@@ -278,17 +275,17 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
       );
       
       _hideShareOptions();
-      _showSnackBar("✅ Video ready to share!");
+      _showSnackBar("Video ready to share!");
       
     } catch (e) {
-      _showSnackBar("❌ Error sharing video: $e");
+      _showSnackBar("Error sharing video: $e");
     }
   }
 
   // 📋 Copy video link to clipboard
   Future<void> _copyLink() async {
     await Clipboard.setData(ClipboardData(text: widget.video.streamingUrl));
-    _showSnackBar("📋 Video link copied to clipboard!");
+    _showSnackBar("Video link copied to clipboard!");
     _hideShareOptions();
   }
 
@@ -352,7 +349,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
             CircularProgressIndicator(color: Colors.white),
             SizedBox(height: 16),
             Text(
-              '📥 Preparing video for sharing...',
+              'Preparing video for sharing...',
               style: TextStyle(color: Colors.white, fontSize: 16),
             ),
             SizedBox(height: 8),
@@ -384,7 +381,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Text(
-                    '📤 Share Video',
+                    'Share Video',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -535,7 +532,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
             const Icon(Icons.error_outline, color: Colors.red, size: 64),
             const SizedBox(height: 16),
             const Text(
-              '❌ Video Failed to Load',
+              'Video Failed to Load',
               style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),

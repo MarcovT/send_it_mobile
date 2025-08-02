@@ -36,9 +36,7 @@ class ClubSearchService {
       
       _isLoaded = true;
       _lastRefresh = DateTime.now();
-      print('Loaded ${_allClubs.length} clubs for local search');
     } catch (e) {
-      print('Error loading clubs: $e');
       rethrow;
     }
   }
