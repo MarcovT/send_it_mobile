@@ -92,7 +92,7 @@ class TermsConditionsDialog extends StatelessWidget {
                       const SizedBox(height: 16),
                       _buildTermsSection(
                         '2. Use of the Service',
-                        'You may use SEND-IT to find and book tennis courts. You agree to use the service responsibly and in accordance with all applicable laws.',
+                        'You agree to use the service responsibly and in accordance with all applicable laws.',
                       ),
                       const SizedBox(height: 16),
                       _buildTermsSection(
@@ -102,7 +102,7 @@ class TermsConditionsDialog extends StatelessWidget {
                       const SizedBox(height: 16),
                       _buildTermsSection(
                         '4. Privacy & Video Recording',
-                        'SEND-IT records videos when you activate the recording feature during play. These videos are stored securely on our servers for 30 days only, after which they are automatically deleted. You can download and view your videos at any time during this period. We do not share your videos with third parties without your consent.',
+                        'SEND-IT records videos when you activate the recording feature during play. These videos are stored securely on our servers for 30 days only, after which they are automatically deleted. You can download and view your videos at any time during this period. We dont share videos but users can freely share videos as they please ',
                       ),
                       const SizedBox(height: 16),
                       _buildTermsSection(
