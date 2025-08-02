@@ -181,7 +181,7 @@ class _CourtCalendarPageState extends State<CourtCalendarPage> {
           AnimatedContainer(
             duration: const Duration(milliseconds: 300),
             curve: Curves.easeInOut,
-            height: _isCalendarExpanded ? 300 : 0,
+            height: _isCalendarExpanded ? 320 : 0,
             child: SingleChildScrollView(
               physics: const NeverScrollableScrollPhysics(),
               child: AnimatedOpacity(
@@ -468,30 +468,51 @@ class _CourtCalendarPageState extends State<CourtCalendarPage> {
         const SizedBox(height: 16),
         SizedBox(
           height: 400,
-          child: ListView.builder(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemCount: _videos.length,
-            itemBuilder: (context, index) {
-              final video = _videos[index];
-              
-              return VideoListItem(
-                video: video,
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => VideoPlayerScreen(video: video),
-                    ),
-                  );
-                },
-              );
+          child: NotificationListener<ScrollNotification>(
+            onNotification: (ScrollNotification scrollInfo) {
+              // Detect when user pulls down at the top of the list
+              if (scrollInfo is ScrollUpdateNotification &&
+                  scrollInfo.metrics.pixels < 0 &&
+                  scrollInfo.metrics.pixels < -50) {
+                // User has pulled down more than 50 pixels beyond the top
+                _refreshVideos();
+                return true;
+              }
+              return false;
             },
+            child: ListView.builder(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemCount: _videos.length,
+              itemBuilder: (context, index) {
+                final video = _videos[index];
+                
+                return VideoListItem(
+                  video: video,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => VideoPlayerScreen(video: video),
+                        ),
+                    );
+                  },
+                );
+              },
+            ),
           ),
         ),
         const SizedBox(height: 20),
       ],
     );
+  }
+
+  Future<void> _refreshVideos() async {
+    await _fetchVideosForDate(_selectedDay);
+    
+    if (_selectedTimePeriod != 'All Day') {
+      _filterByTimePeriod(_selectedTimePeriod);
+    }
   }
 
   Future<void> _fetchVideosForDate(DateTime date) async {

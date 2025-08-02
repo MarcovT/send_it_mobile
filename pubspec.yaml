@@ -48,6 +48,7 @@ dependencies:
   calendar_date_picker2: ^1.0.5
   image_gallery_saver_plus: ^4.0.1
   flutter_dotenv: ^5.1.0
+  shared_preferences: ^2.2.2
 
 dev_dependencies:
   flutter_launcher_icons: ^0.13.1

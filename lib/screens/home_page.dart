@@ -1,10 +1,13 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:send_it_mobile/services/api_service.dart';
 import 'package:send_it_mobile/services/club_search_service.dart';
+import 'package:send_it_mobile/services/terms_service.dart';
+import 'package:send_it_mobile/models/clubs.dart';
+import 'package:send_it_mobile/widgets/club_list_item.dart';
+import 'package:send_it_mobile/widgets/terms_conditions_dialog.dart';
 import 'dart:async';
-import '../models/clubs.dart';
-import '../widgets/club_list_item.dart';
 import 'court_page.dart';
 
 class HomePage extends StatefulWidget {
@@ -29,10 +32,13 @@ class _HomePageState extends State<HomePage> {
   // Debounce timer for search
   Timer? _debounceTimer;
   
+  bool _hasCheckedTerms = false;
+  bool _termsAccepted = false;
+  
   @override
   void initState() {
     super.initState();
-    _initializeApp();
+    _checkTermsAndInitialize();
   }
 
   @override
@@ -42,14 +48,89 @@ class _HomePageState extends State<HomePage> {
     super.dispose();
   }
 
-  // Initialize app with location and club data
+  // Check terms before initializing:
+  Future<void> _checkTermsAndInitialize() async {
+    final hasAccepted = await TermsService.hasAcceptedTerms();
+    
+    setState(() {
+      _hasCheckedTerms = true;
+      _termsAccepted = hasAccepted;
+    });
+    
+    if (hasAccepted) {
+      _initializeApp();
+    } else {
+      // Show terms dialog
+      _showTermsDialog();
+    }
+  }
+
+  // ADD THIS NEW METHOD - show the terms dialog:
+  void _showTermsDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false, // Prevent dismissing by tapping outside
+      builder: (context) => TermsConditionsDialog(
+        onAccept: () async {
+          await TermsService.acceptTerms();
+          Navigator.of(context).pop();
+          setState(() {
+            _termsAccepted = true;
+          });
+          _initializeApp();
+        },
+        onDecline: () {
+          Navigator.of(context).pop();
+          // Show dialog again after a brief delay
+          Future.delayed(const Duration(milliseconds: 500), () {
+            if (mounted) {
+              _showDeclineDialog();
+            }
+          });
+        },
+      ),
+    );
+  }
+
+  void _showDeclineDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        title: Row(
+          children: [
+            Icon(Icons.warning, color: Colors.orange.shade600),
+            const SizedBox(width: 8),
+            const Text('Terms Required'),
+          ],
+        ),
+        content: const Text(
+          'You must accept the Terms & Conditions to use SEND-IT. Would you like to review them again?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              _showTermsDialog();
+            },
+            child: const Text('Review Terms'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Initialize app with location and club data (KEEP THIS METHOD AS IS)
   Future<void> _initializeApp() async {
     await _determinePosition();
     await _loadAllClubs();
     await _fetchClubs();
   }
 
-  // Load all clubs for local search
+  // Load all clubs for local search (KEEP THIS METHOD AS IS)
   Future<void> _loadAllClubs() async {
     try {
       final latitude = _currentPosition?.latitude;
@@ -59,14 +140,13 @@ class _HomePageState extends State<HomePage> {
         latitude: latitude, 
         longitude: longitude
       );
-      print('Clubs loaded for local search with location data');
     } catch (e) {
       print('Error loading clubs: $e');
       // Continue anyway - we can still use API-based approaches
     }
   }
 
-  // Get current location
+  // Get current location (KEEP THIS METHOD AS IS)
   Future<void> _determinePosition() async {
     bool serviceEnabled;
     LocationPermission permission;
@@ -77,8 +157,8 @@ class _HomePageState extends State<HomePage> {
       if (!serviceEnabled) {
         // Location services are not enabled, use default location
         _currentPosition = Position(
-          latitude: -28.749965,
-          longitude: 24.740717,
+          latitude: 26.2056,
+          longitude: 28.0337,
           timestamp: DateTime.now(),
           accuracy: 0,
           altitude: 0,
@@ -97,8 +177,8 @@ class _HomePageState extends State<HomePage> {
         if (permission == LocationPermission.denied) {
           // Permissions are denied, use default location
           _currentPosition = Position(
-            latitude: -28.749965,
-            longitude: 24.740717,
+            latitude: 26.2056,
+            longitude: 28.0337,
             timestamp: DateTime.now(),
             accuracy: 0,
             altitude: 0,
@@ -115,8 +195,8 @@ class _HomePageState extends State<HomePage> {
       if (permission == LocationPermission.deniedForever) {
         // Permissions are denied forever, use default location
         _currentPosition = Position(
-          latitude: -28.749965,
-          longitude: 24.740717,
+          latitude: 26.2056,
+          longitude: 28.0337,
           timestamp: DateTime.now(),
           accuracy: 0,
           altitude: 0,
@@ -144,8 +224,8 @@ class _HomePageState extends State<HomePage> {
     } catch (e) {
       // Use default location if there's an error we need to make a default maybe middle BFN/CT/JHB?
       _currentPosition = Position(
-        latitude: -28.749965,
-        longitude: 24.740717,
+        latitude: 26.2056,
+        longitude: 28.0337,
         timestamp: DateTime.now(),
         accuracy: 0,
         altitude: 0,
@@ -158,7 +238,7 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  // Fetch clubs from API based on toggle state
+  // Fetch clubs from API based on toggle state (KEEP THIS METHOD AS IS)
   Future<void> _fetchClubs() async {
     setState(() {
       _isLoading = true;
@@ -167,8 +247,8 @@ class _HomePageState extends State<HomePage> {
 
     try {
         // Use current position if available, otherwise use default
-        final latitude = _currentPosition?.latitude ?? -28.749965;
-        final longitude = _currentPosition?.longitude ?? 24.740717;
+        final latitude = _currentPosition?.latitude ?? 26.2056;
+        final longitude = _currentPosition?.longitude ?? 28.0337;
          
       if (_showNearbyOnly) {       
         // Fetch nearby clubs with location
@@ -195,7 +275,7 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  // Debounced function
+  // Debounced function (KEEP THIS METHOD AS IS)
   void _onSearchChanged(String query) {
     // Cancel the previous timer
     _debounceTimer?.cancel();
@@ -206,7 +286,7 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  // Search clubs using local search service
+  // Search clubs using local search service (KEEP THIS METHOD AS IS)
   Future<void> _searchClubs(String query) async {
     if (query.isEmpty) {
       setState(() {
@@ -237,7 +317,6 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  // Clear search
   void _clearSearch() {
     _debounceTimer?.cancel();
     _searchController.clear();
@@ -249,7 +328,6 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  // Toggle between nearby and all clubs
   void _toggleNearbyMode() {
     // Clear search when toggling
     _clearSearch();
@@ -259,7 +337,6 @@ class _HomePageState extends State<HomePage> {
     _fetchClubs();
   }
 
-  // Refresh clubs (and update location if needed)
   Future<void> _refreshClubs() async {
     // Clear search when refreshing
     _clearSearch();
@@ -283,6 +360,85 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    if (!_hasCheckedTerms) {
+      return Scaffold(
+        backgroundColor: Colors.white,
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              SizedBox(
+                width: 32,
+                height: 32,
+                child: CircularProgressIndicator(
+                  strokeWidth: 3,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.indigo.shade400),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Loading SEND-IT...',
+                style: TextStyle(
+                  color: Colors.grey.shade600,
+                  fontSize: 15,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (!_termsAccepted) {
+      return Scaffold(
+        backgroundColor: Colors.white,
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.description,
+                size: 64,
+                color: Colors.indigo.shade400,
+              ),
+              const SizedBox(height: 20),
+              Text(
+                'Terms & Conditions Required',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey.shade800,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Please accept our terms to continue',
+                style: TextStyle(
+                  color: Colors.grey.shade600,
+                  fontSize: 14,
+                ),
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: _showTermsDialog,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.indigo,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 32,
+                    vertical: 12,
+                  ),
+                ),
+                child: const Text(
+                  'Review Terms',
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
       appBar: AppBar(

@@ -78,9 +78,9 @@ class VideoData {
     return VideoData(
       id: safeToString(json['_id']),
       title: safeToString(json['title']),
-      thumbnailUrl: safeToString(json['thumbnailUrl']), // Not in API response
-      videoUrl: safeToString(json['videoUrl']), // Not in API response
-      duration: safeToString(json['duration']), // Not in API response
+      thumbnailUrl: safeToString(json['thumbnailUrl']), 
+      videoUrl: safeToString(json['videoUrl']), 
+      duration: safeToString(json['duration']), 
       courtId: safeToString(json['courtId']),
       description: safeToString(json['description']),
       sponsors: safeToString(json['sponsors']),
