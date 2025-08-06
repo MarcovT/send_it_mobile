@@ -23,6 +23,7 @@ class ApiService {
     return secret;
   }
 
+
   // Common headers for all requests
   static Map<String, String> get _headers => {
     'Content-Type': 'application/json',
@@ -50,7 +51,7 @@ class ApiService {
         throw Exception('Failed to load nearby clubs: ${response.statusCode}');
       }
     } catch (e) {
-      throw Exception('Error fetching nearby clubs: $e');
+      throw Exception('Unable to connect. Please check your internet connection and try again.');
     }
   }
  
@@ -90,7 +91,7 @@ class ApiService {
         throw Exception('Failed to load all clubs: ${response.statusCode}');
       }
     } catch (e) {
-      throw Exception('Error fetching all clubs: $e');
+      throw Exception('Unable to connect. Please check your internet connection and try again.');
     }
   }
   
@@ -138,7 +139,7 @@ class ApiService {
         throw Exception('Failed to load courts: ${response.statusCode} - ${response.body}');
       }
     } catch (e) {
-      throw Exception('Error fetching courts: $e');
+      throw Exception('Unable to connect. Please check your internet connection and try again.');
     }
   }
 
@@ -169,7 +170,7 @@ class ApiService {
               final video = VideoData.fromJson(videoJson);
               videos.add(video);
             } catch (e) {
-              throw Exception('❌ Error parsing video $i: $e');
+              throw Exception('Unable to connect. Please check your internet connection and try again.');
             }
           }
           
@@ -181,7 +182,7 @@ class ApiService {
         throw Exception('Failed to load videos: ${response.statusCode}');
       }
     } catch (e) {
-      throw Exception('Error fetching videos: $e');
+      throw Exception('Unable to connect. Please check your internet connection and try again.');
     }
   }
 

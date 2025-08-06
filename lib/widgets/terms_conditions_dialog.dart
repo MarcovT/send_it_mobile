@@ -96,17 +96,22 @@ class TermsConditionsDialog extends StatelessWidget {
                       ),
                       const SizedBox(height: 16),
                       _buildTermsSection(
-                        '3. Location Data',
+                        '3. Location Data & Internet connectivity',
                         'SEND-IT may request access to your location to provide nearby club recommendations. This data is used solely for improving your experience.',
                       ),
                       const SizedBox(height: 16),
                       _buildTermsSection(
-                        '4. Privacy & Video Recording',
+                        '4. Internet connectivity',
+                        'SEND-IT requires internet connectivity to fetch club and video information. While the app uses minimal data, a stable connection is essential for the best user experience.',
+                      ),
+                      const SizedBox(height: 16),
+                      _buildTermsSection(
+                        '5. Privacy & Video Recording',
                         'SEND-IT records videos when you activate the recording feature during play. These videos are stored securely on our servers for 30 days only, after which they are automatically deleted. You can download and view your videos at any time during this period. We dont share videos but users can freely share videos as they please ',
                       ),
                       const SizedBox(height: 16),
                       _buildTermsSection(
-                        '5. Liability',
+                        '6. Liability',
                         'SEND-IT is provided "as is" without warranties. We are not liable for any damages arising from your use of the service. By using the video recording feature, you acknowledge that videos may be accessible to other users of the app, and you assume full responsibility for any content you record. As this is a free app available to the public, we cannot guarantee the privacy or security of recorded content beyond our 30-day storage policy.',
                       ),
                       

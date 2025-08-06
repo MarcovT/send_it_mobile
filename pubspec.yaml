@@ -1,5 +1,5 @@
-name: send_it_mobile
-description: "A new Flutter project."
+name: send_it
+description: "The simplest way to access your padel and pickleball game videos. Watch your best shots, download clips instantly, and share your highlights with ease."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -42,8 +42,6 @@ dependencies:
   table_calendar: ^3.2.0
   path: ^1.9.1
   video_player: ^2.8.1
-  share_plus: ^7.2.2
-  url_launcher: ^6.2.4
   path_provider: ^2.1.1
   calendar_date_picker2: ^1.0.5
   image_gallery_saver_plus: ^4.0.1

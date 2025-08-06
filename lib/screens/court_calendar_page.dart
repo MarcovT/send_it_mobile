@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:intl/intl.dart';
-import 'package:send_it_mobile/screens/video_player_screen.dart';
+import 'package:send_it/screens/video_player_screen.dart';
 import 'package:calendar_date_picker2/calendar_date_picker2.dart';
 import '../models/clubs.dart';
 import '../models/court.dart';
@@ -541,7 +541,7 @@ class _CourtCalendarPageState extends State<CourtCalendarPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error fetching videos: $e'),
+            content: Text('Unable to connect. Please check your internet connection and try again.'),
             backgroundColor: Colors.red,
           ),
         );

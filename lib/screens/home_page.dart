@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:send_it_mobile/services/api_service.dart';
-import 'package:send_it_mobile/services/club_search_service.dart';
-import 'package:send_it_mobile/services/terms_service.dart';
-import 'package:send_it_mobile/models/clubs.dart';
-import 'package:send_it_mobile/widgets/club_list_item.dart';
-import 'package:send_it_mobile/widgets/terms_conditions_dialog.dart';
+import 'package:send_it/services/api_service.dart';
+import 'package:send_it/services/club_search_service.dart';
+import 'package:send_it/services/terms_service.dart';
+import 'package:send_it/models/clubs.dart';
+import 'package:send_it/widgets/club_list_item.dart';
+import 'package:send_it/widgets/terms_conditions_dialog.dart';
 import 'dart:async';
 import 'court_page.dart';
 
@@ -269,7 +269,7 @@ class _HomePageState extends State<HomePage> {
     } catch (e) {
       setState(() {
         _isLoading = false;
-        _errorMessage = 'Error fetching clubs: $e';
+        _errorMessage = 'Unable to connect. Please check your internet connection and try again.';
       });
     }
   }
@@ -311,7 +311,7 @@ class _HomePageState extends State<HomePage> {
     } catch (e) {
       setState(() {
         _isSearching = false;
-        _errorMessage = 'Search error: $e';
+        _errorMessage = 'Search error please try again';
       });
     }
   }
@@ -454,15 +454,7 @@ class _HomePageState extends State<HomePage> {
             fontSize: 18,
           ),
         ),
-        actions: [
-          // Search icon
-          IconButton(
-            icon: Icon(
-              _searchQuery.isNotEmpty ? Icons.clear : Icons.search,
-              color: Colors.grey.shade600,
-            ),
-            onPressed: _searchQuery.isNotEmpty ? _clearSearch : null,
-          ),
+        actions: [          
           // Toggle switch (only show when not searching)
           if (_searchQuery.isEmpty) ...[
             Container(

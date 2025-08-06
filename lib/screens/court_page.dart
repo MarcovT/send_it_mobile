@@ -41,7 +41,7 @@ class _CourtPageState extends State<CourtPage> {
     } catch (e) {
       setState(() {
         _isLoading = false;
-        _errorMessage = 'Error fetching courts: $e';
+        _errorMessage = 'Unable to connect. Please check your internet connection and try again.';
       });
     }
   }
