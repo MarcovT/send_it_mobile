@@ -52,6 +52,12 @@ app.*.map.json
 .env.staging
 .env.*.local
 
+# Android signing (IMPORTANT: Keep keystores safe)
+*.jks
+*.keystore
+android/key.properties
+android/upload-keystore.jks
+
 # Flutter/Dart specific (these should already be there)
 .dart_tool/
 .flutter-plugins

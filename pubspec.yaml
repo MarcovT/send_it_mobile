@@ -35,11 +35,8 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
   http: ^1.4.0
-  file_picker: ^8.1.2
   geolocator: ^14.0.0
-  permission_handler: ^12.0.0+1
   intl: ^0.20.2
-  table_calendar: ^3.2.0
   path: ^1.9.1
   video_player: ^2.8.1
   path_provider: ^2.1.1
@@ -62,8 +59,9 @@ dev_dependencies:
 
 flutter_launcher_icons:
   android: true
-  ios: true
   image_path: "assets/si_icon.png"
+  ios: true
+  image_path_ios: "assets/si_icon_ios.png"
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 
