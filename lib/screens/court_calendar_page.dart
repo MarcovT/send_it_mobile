@@ -466,41 +466,57 @@ class _CourtCalendarPageState extends State<CourtCalendarPage> {
           ),
         ),
         const SizedBox(height: 16),
-        SizedBox(
-          height: 400,
-          child: NotificationListener<ScrollNotification>(
-            onNotification: (ScrollNotification scrollInfo) {
-              // Detect when user pulls down at the top of the list
-              if (scrollInfo is ScrollUpdateNotification &&
-                  scrollInfo.metrics.pixels < 0 &&
-                  scrollInfo.metrics.pixels < -50) {
-                // User has pulled down more than 50 pixels beyond the top
-                _refreshVideos();
-                return true;
-              }
-              return false;
-            },
-            child: ListView.builder(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: _videos.length,
-              itemBuilder: (context, index) {
-                final video = _videos[index];
-                
-                return VideoListItem(
-                  video: video,
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => VideoPlayerScreen(video: video),
-                        ),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            // Get the actual available space within the SingleChildScrollView
+            final screenHeight = MediaQuery.of(context).size.height;
+            final appBarHeight = AppBar().preferredSize.height + MediaQuery.of(context).padding.top;
+            final calendarHeight = _isCalendarExpanded ? 352 : 92; // more accurate calendar heights
+            final dateDisplayHeight = 72; // more accurate date display height
+            final timeButtonsHeight = 88; // more accurate time buttons height
+            final spacing = 52; // SizedBox and padding spacing
+            
+            // Calculate available height more accurately
+            final usedHeight = appBarHeight + calendarHeight + dateDisplayHeight + timeButtonsHeight + spacing;
+            final availableHeight = screenHeight - usedHeight;
+            
+            return SizedBox(
+              height: availableHeight > 200 ? availableHeight : 200, // Ensure minimum viable height
+              child: NotificationListener<ScrollNotification>(
+                onNotification: (ScrollNotification scrollInfo) {
+                  // Detect when user pulls down at the top of the list
+                  if (scrollInfo is ScrollUpdateNotification &&
+                      scrollInfo.metrics.pixels < 0 &&
+                      scrollInfo.metrics.pixels < -50) {
+                    // User has pulled down more than 50 pixels beyond the top
+                    _refreshVideos();
+                    return true;
+                  }
+                  return false;
+                },
+                child: ListView.builder(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemCount: _videos.length,
+                  itemBuilder: (context, index) {
+                    final video = _videos[index];
+                    
+                    return VideoListItem(
+                      video: video,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => VideoPlayerScreen(video: video),
+                          ),
+                        );
+                      },
                     );
                   },
-                );
-              },
-            ),
-          ),
+                ),
+              ),
+            );
+          },
         ),
         const SizedBox(height: 20),
       ],

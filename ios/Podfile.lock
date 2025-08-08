@@ -45,6 +45,6 @@ SPEC CHECKSUMS:
   shared_preferences_foundation: 9e1978ff2562383bd5676f64ec4e9aa8fa06a6f7
   video_player_avfoundation: 2cef49524dd1f16c5300b9cd6efd9611ce03639b
 
-PODFILE CHECKSUM: de52c6c7764c6a31155420c355bb1c54991a6bf3
+PODFILE CHECKSUM: dda72521d548ad4fa007d446e36a93974dbbec7d
 
 COCOAPODS: 1.16.2

@@ -1,5 +1,5 @@
 # Uncomment this line to define a global platform for your project
-# platform :ios, '12.0'
+platform :ios, '12.0'
 
 # CocoaPods analytics sends network stats synchronously affecting flutter build latency.
 ENV['COCOAPODS_DISABLE_STATS'] = 'true'
@@ -40,10 +40,18 @@ post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
     
-    # Fix SDWebImage header issue
+    # Fix Flutter framework path for geolocator and other plugins
     target.build_configurations.each do |config|
       config.build_settings['USE_HEADERMAP'] = 'NO'
       config.build_settings['ALWAYS_SEARCH_USER_PATHS'] = 'NO'
+      
+      # Fix Flutter.h not found error
+      if target.name == 'geolocator_apple'
+        config.build_settings['FRAMEWORK_SEARCH_PATHS'] ||= []
+        config.build_settings['FRAMEWORK_SEARCH_PATHS'] << '$(PROJECT_DIR)/../Flutter'
+        config.build_settings['HEADER_SEARCH_PATHS'] ||= []
+        config.build_settings['HEADER_SEARCH_PATHS'] << '$(PROJECT_DIR)/../Flutter'
+      end
     end
   end
 end

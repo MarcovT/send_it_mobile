@@ -1,5 +1,5 @@
 name: send_it
-description: "The simplest way to access your padel and pickleball game videos. Watch your best shots, download clips instantly, and share your highlights with ease."
+description: "SEND-IT Replays - The simplest way to access your padel and pickleball game videos. Watch your best shots, download clips instantly, and share your highlights with ease."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -59,8 +59,8 @@ dev_dependencies:
 
 flutter_launcher_icons:
   android: true
-  image_path: "assets/si_icon.png"
   ios: true
+  image_path: "assets/si_icon.png"
   remove_alpha_ios: true
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

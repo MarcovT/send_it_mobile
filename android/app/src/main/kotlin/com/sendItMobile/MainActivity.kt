@@ -1,4 +1,4 @@
-package com.example.send_it_mobile
+package com.sendItMobile
 
 import io.flutter.embedding.android.FlutterActivity
 
