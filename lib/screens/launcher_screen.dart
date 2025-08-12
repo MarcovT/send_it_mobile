@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'home_page.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class LauncherScreen extends StatefulWidget {
   const LauncherScreen({super.key});
@@ -49,6 +50,9 @@ class _LauncherScreenState extends State<LauncherScreen> with TickerProviderStat
   }
 
   void _startAnimation() async {
+    // Load environment variables in background
+    dotenv.load(fileName: ".env");
+    
     // Start the animations
     _fadeController.forward();
     await Future.delayed(const Duration(milliseconds: 200));
