@@ -47,6 +47,7 @@ dependencies:
 
 dev_dependencies:
   flutter_launcher_icons: ^0.13.1
+  flutter_native_splash: ^2.3.2
   flutter_test:
     sdk: flutter
 
@@ -64,6 +65,16 @@ flutter_launcher_icons:
   remove_alpha_ios: true
   adaptive_icon_background: "#FFFFFF"
   adaptive_icon_foreground: "assets/si_icon.png"
+
+flutter_native_splash:
+  color: "#3f51b5"
+  color_dark: "#283593"
+  android_12:
+    color: "#3f51b5"
+    color_dark: "#283593"
+  android: true
+  ios: true
+  web: false
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 

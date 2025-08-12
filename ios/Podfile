@@ -45,6 +45,9 @@ post_install do |installer|
       config.build_settings['USE_HEADERMAP'] = 'NO'
       config.build_settings['ALWAYS_SEARCH_USER_PATHS'] = 'NO'
       
+      # Force all pods to use iOS 16.0 minimum deployment target
+      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '16.0'
+      
       # Fix Flutter.h not found error
       if target.name == 'geolocator_apple'
         config.build_settings['FRAMEWORK_SEARCH_PATHS'] ||= []
