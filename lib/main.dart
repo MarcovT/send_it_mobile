@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'screens/launcher_screen.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 Future<void> main() async {
   runApp(MyApp());
