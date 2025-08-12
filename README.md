@@ -29,9 +29,6 @@ SEND-IT Replays is a Flutter mobile application that connects players to their r
 
 ## Critical Configuration Files
 
-### Environment Configuration
-  - `BASE_URL`: Backend API endpoint (currently: `https://api.senditreplays.com:3000/api`)
-
 ### API Service
 - **`lib/services/api_service.dart`**: Core API communication layer
   - Club discovery endpoints
