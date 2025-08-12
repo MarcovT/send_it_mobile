@@ -6,6 +6,13 @@ SEND-IT Replays is a Flutter mobile application that connects players to their r
 
 ## App Screens Overview
 
+### Launcher Screen (`lib/screens/launcher_screen.dart`)
+- **Brand Introduction**: Animated splash screen with SEND-IT branding
+- **Visual Elements**: Tennis ball icon with scale/fade animations
+- **Loading State**: Shows "Loading nearby clubs" with progress indicator
+- **Auto Navigation**: 2.5-second timer before transitioning to home page
+- **Smooth Transitions**: Fade transition to main application
+
 ### Home Page (`lib/screens/home_page.dart`)
 - **Location Services**: Requests user location to find nearby clubs
 - **Club Discovery**: Displays a list of clubs sorted by distance
