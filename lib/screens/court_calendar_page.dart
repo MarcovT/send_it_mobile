@@ -257,12 +257,18 @@ class _CourtCalendarPageState extends State<CourtCalendarPage> {
             size: 20,
           ),
           const SizedBox(width: 12),
-          Text(
-            'Selected Date: ${DateFormat('EE, MMMM d, yyyy').format(_selectedDay)}',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: Colors.indigo.shade700,
+          Expanded(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'Selected Date: ${DateFormat('EE, MMMM d, yyyy').format(_selectedDay)}',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.indigo.shade700,
+                ),
+              ),
             ),
           ),
         ],

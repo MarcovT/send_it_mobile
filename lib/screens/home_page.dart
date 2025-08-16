@@ -145,7 +145,6 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  // Get current location (KEEP THIS METHOD AS IS)
   Future<void> _determinePosition() async {
     bool serviceEnabled;
     LocationPermission permission;
@@ -156,8 +155,8 @@ class _HomePageState extends State<HomePage> {
       if (!serviceEnabled) {
         // Location services are not enabled, use default location
         _currentPosition = Position(
-          latitude: 26.2056,
-          longitude: 28.0337,
+          latitude: -34.285933,
+          longitude: 18.434878,
           timestamp: DateTime.now(),
           accuracy: 0,
           altitude: 0,
@@ -176,8 +175,8 @@ class _HomePageState extends State<HomePage> {
         if (permission == LocationPermission.denied) {
           // Permissions are denied, use default location
           _currentPosition = Position(
-            latitude: 26.2056,
-            longitude: 28.0337,
+            latitude: -34.285933,
+            longitude: 18.434878,
             timestamp: DateTime.now(),
             accuracy: 0,
             altitude: 0,
@@ -194,8 +193,8 @@ class _HomePageState extends State<HomePage> {
       if (permission == LocationPermission.deniedForever) {
         // Permissions are denied forever, use default location
         _currentPosition = Position(
-          latitude: 26.2056,
-          longitude: 28.0337,
+          latitude: -34.285933,
+          longitude: 18.434878,
           timestamp: DateTime.now(),
           accuracy: 0,
           altitude: 0,
@@ -223,8 +222,8 @@ class _HomePageState extends State<HomePage> {
     } catch (e) {
       // Use default location if there's an error we need to make a default maybe middle BFN/CT/JHB?
       _currentPosition = Position(
-        latitude: 26.2056,
-        longitude: 28.0337,
+        latitude: -34.285933,
+        longitude: 18.434878,
         timestamp: DateTime.now(),
         accuracy: 0,
         altitude: 0,

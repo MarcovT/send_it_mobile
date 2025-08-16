@@ -61,7 +61,7 @@ class ApiService {
       String url;
       if (latitude != null && longitude != null) {
         // Use location-aware endpoint with large radius to get all clubs with distances
-        url = '$baseUrl/clubs/$latitude/$longitude/1000';
+        url = '$baseUrl/clubs/all/$latitude/$longitude';
       } else {
         // Use original endpoint without location
         url = '$baseUrl/clubs/';
