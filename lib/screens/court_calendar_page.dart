@@ -412,7 +412,7 @@ class _CourtCalendarPageState extends State<CourtCalendarPage> {
     String getTimeRangeDisplay() {
       switch (_selectedTimePeriod) {
         case 'Morning':
-          return 'Morning (06:00-12:00)';
+          return 'Morning (03:00-12:00)';
         case 'Afternoon':
           return 'Afternoon (12:00-18:00)';
         case 'Evening':
@@ -583,7 +583,7 @@ class _CourtCalendarPageState extends State<CourtCalendarPage> {
       
       switch (period) {
         case 'Morning':
-          startHour = 6;
+          startHour = 0;
           endHour = 12;
           break;
         case 'Afternoon':
