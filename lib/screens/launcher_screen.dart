@@ -129,11 +129,12 @@ class _LauncherScreenState extends State<LauncherScreen> with TickerProviderStat
                             ),
                           ],
                         ),
-                        child: Center(
-                          child: Icon(
-                            Icons.sports_tennis,
-                            size: 60,
-                            color: Colors.indigo.shade700,
+                        child: ClipOval(
+                          child: Image.asset(
+                            'assets/si_icon.png',
+                            width: 100,
+                            height: 100,
+                            fit: BoxFit.cover,
                           ),
                         ),
                       ),
