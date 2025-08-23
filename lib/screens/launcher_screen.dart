@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 import 'home_page.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter_native_splash/flutter_native_splash.dart';
 
 class LauncherScreen extends StatefulWidget {
   const LauncherScreen({super.key});
@@ -52,6 +53,11 @@ class _LauncherScreenState extends State<LauncherScreen> with TickerProviderStat
   void _startAnimation() async {
     // Load environment variables in background
     dotenv.load(fileName: ".env");
+    
+    // Remove native splash after 0.2 seconds
+    Future.delayed(const Duration(milliseconds: 200), () {
+      FlutterNativeSplash.remove();
+    });
     
     // Start the animations
     _fadeController.forward();

@@ -148,11 +148,11 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
       _isSubmittingDeleteRequest = false;
     });
 
-    if (success) {
+     if (success) {
       _showSnackBar("Delete request submitted successfully");
-    } else {
-      _showSnackBar("Failed to submit delete request. Please try again later.");
-    }
+     } else {
+       _showSnackBar("Failed to submit delete request. Please try again later.");
+     }
   }
 
   void _showDeleteRequestForm() {
