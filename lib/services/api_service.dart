@@ -186,6 +186,33 @@ class ApiService {
     }
   }
 
+  // Submit video deletion request
+  static Future<bool> submitVideoDeleteRequest({
+    required String videoId,
+    required String videoTitle,
+    required String name,
+    required String surname,
+    required String email,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/videos/request-deletion'),
+        headers: _headers,
+        body: jsonEncode({
+          'videoId': videoId,
+          'videoTitle': videoTitle,
+          'name': name,
+          'surname': surname,
+          'email': email,
+        }),
+      );
+
+      return response.statusCode == 200;
+    } catch (e) {
+      return false;
+    }
+  }
+
   // Parse JSON into Club object
   static Club _parseClubs(Map<String, dynamic> json) {
     return Club(
