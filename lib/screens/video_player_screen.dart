@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import '../models/video_data.dart';
+import '../services/api_service.dart';
 import 'package:image_gallery_saver_plus/image_gallery_saver_plus.dart';
 
 class VideoPlayerScreen extends StatefulWidget {
@@ -24,6 +25,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
   bool _hasError = false;
   bool _showControls = false;
   bool _isDownloading = false;
+  bool _isSubmittingDeleteRequest = false;
 
   @override
   void initState() {
@@ -129,6 +131,168 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
     }
   }
 
+  Future<void> _submitDeleteRequest(String name, String surname, String email) async {
+    setState(() {
+      _isSubmittingDeleteRequest = true;
+    });
+
+    final success = await ApiService.submitVideoDeleteRequest(
+      videoId: widget.video.id,
+      videoTitle: widget.video.title,
+      name: name,
+      surname: surname,
+      email: email,
+    );
+
+    setState(() {
+      _isSubmittingDeleteRequest = false;
+    });
+
+     if (success) {
+      _showSnackBar("Delete request submitted successfully");
+     } else {
+       _showSnackBar("Failed to submit delete request. Please try again later.");
+     }
+  }
+
+  void _showDeleteRequestForm() {
+    final nameController = TextEditingController();
+    final surnameController = TextEditingController();
+    final emailController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('Request Video Deletion'),
+              content: Form(
+                key: formKey,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      TextFormField(
+                        controller: nameController,
+                        decoration: const InputDecoration(
+                          labelText: 'Name *',
+                          border: OutlineInputBorder(),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Name is required';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: surnameController,
+                        decoration: const InputDecoration(
+                          labelText: 'Surname *',
+                          border: OutlineInputBorder(),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Surname is required';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: emailController,
+                        keyboardType: TextInputType.emailAddress,
+                        decoration: const InputDecoration(
+                          labelText: 'Email Address *',
+                          border: OutlineInputBorder(),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Email address is required';
+                          }
+                          if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value.trim())) {
+                            return 'Please enter a valid email address';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      const Text(
+                        'We only use this information to contact you and confirm when the deletion is completed. Please expect a response within 24-48 hours.',
+                        style: TextStyle(fontSize: 12, color: Colors.grey),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: _isSubmittingDeleteRequest
+                      ? null
+                      : () {
+                          if (formKey.currentState!.validate()) {
+                            Navigator.of(context).pop();
+                            _submitDeleteRequest(
+                              nameController.text.trim(),
+                              surnameController.text.trim(),
+                              emailController.text.trim(),
+                            );
+                          }
+                        },
+                  child: _isSubmittingDeleteRequest
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text('Submit Request'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _showActionMenu() {
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.download),
+                title: const Text('Download'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _downloadVideoToGallery();
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.delete_outline),
+                title: const Text('Request to be deleted'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _showDeleteRequestForm();
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
 
   void _showSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -161,8 +325,8 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.download, color: Colors.white),
-            onPressed: _downloadVideoToGallery,
+            icon: const Icon(Icons.more_vert, color: Colors.white),
+            onPressed: _showActionMenu,
           ),
         ],
       ),

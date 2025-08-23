@@ -107,7 +107,7 @@ class TermsConditionsDialog extends StatelessWidget {
                       const SizedBox(height: 16),
                       _buildTermsSection(
                         '5. Privacy & Video Recording',
-                        'SEND-IT records videos when you activate the recording feature during play. These videos are stored securely on our servers for 30 days only, after which they are automatically deleted. You can download and view your videos at any time during this period. We dont share videos but users can freely share videos as they please ',
+                        'SEND-IT records videos when you activate the recording feature during play. These videos are stored securely on our servers for 30 days only, after which they are automatically deleted. You can download and view your videos at any time during this period. We dont share videos but users can freely share videos as they please. If you would like a video deleted before the 30-day period, please fill out our deletion request form in the drop down selection and we will contact you to confirm identity and remove it within 48 hours.',
                       ),
                       const SizedBox(height: 16),
                       _buildTermsSection(

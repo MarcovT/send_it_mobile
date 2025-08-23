@@ -27,7 +27,7 @@ class VideoData {
   });
 
   // Secure base URL getter
-  static String get _baseUrl {
+  static String get baseUrl {
     final url = dotenv.env['BASE_URL'];
     if (url == null || url.isEmpty) {
       throw Exception('BASE_URL not found in environment variables. Please check your .env file.');
@@ -45,25 +45,25 @@ class VideoData {
   }
 
   // Headers for authenticated requests
-  static Map<String, String> get _headers => {
+  static Map<String, String> get headers => {
     'Content-Type': 'application/json',
     'send-it-api-key': _apiSecret,
   };
 
   // Streaming URL using environment variable
-  String get streamingUrl => '$_baseUrl/videos/serve-video/$id';
+  String get streamingUrl => '$baseUrl/videos/serve-video/$id';
 
   // Method to fetch video stream with authentication headers
   static Future<http.Response> fetchVideoStream(String videoId) async {
-    final url = '$_baseUrl/videos/serve-video/$videoId';
+    final url = '$baseUrl/videos/serve-video/$videoId';
     return await http.get(
       Uri.parse(url),
-      headers: _headers,
+      headers: headers,
     );
   }
 
   // For use with video players that support custom headers
-  Map<String, String> get streamingHeaders => _headers;
+  Map<String, String> get streamingHeaders => headers;
   
   // Factory constructor to create VideoData from API JSON
   factory VideoData.fromJson(Map<String, dynamic> json) {
