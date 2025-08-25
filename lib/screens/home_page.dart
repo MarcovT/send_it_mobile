@@ -475,7 +475,7 @@ class _HomePageState extends State<HomePage> {
                     child: Switch(
                       value: _showNearbyOnly,
                       onChanged: (value) => _toggleNearbyMode(),
-                      activeColor: Colors.indigo,
+                      activeThumbColor: Colors.indigo,
                       activeTrackColor: Colors.indigo.shade100,
                       inactiveThumbColor: Colors.grey.shade400,
                       inactiveTrackColor: Colors.grey.shade200,
