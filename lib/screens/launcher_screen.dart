@@ -52,7 +52,7 @@ class _LauncherScreenState extends State<LauncherScreen> with TickerProviderStat
 
   void _startAnimation() async {
     // Load environment variables in background
-    dotenv.load(fileName: ".env");
+    await dotenv.load(fileName: ".env");
     
     // Remove native splash after 0.2 seconds
     Future.delayed(const Duration(milliseconds: 200), () {
