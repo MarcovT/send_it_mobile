@@ -65,24 +65,11 @@ class VideoListItem extends StatelessWidget {
                   if (video.title.isNotEmpty) ...[
                     const SizedBox(height: 4),
                     Text(
-                      video.title,
+                      video.title.split('|').take(3).join('|').trim(),
                       style: TextStyle(
                         fontSize: 13,
                         color: Colors.grey.shade600,
                         fontWeight: FontWeight.w500,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                  // Show additional video info if available
-                  if (video.description.isNotEmpty) ...[
-                    const SizedBox(height: 2),
-                    Text(
-                      video.description,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey.shade500,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -188,7 +175,7 @@ class VideoListItemWithThumbnail extends StatelessWidget {
                   if (video.title.isNotEmpty) ...[
                     const SizedBox(height: 4),
                     Text(
-                      video.title,
+                      video.title.split('|').take(3).join('|').trim(),
                       style: TextStyle(
                         fontSize: 13,
                         color: Colors.grey.shade600,

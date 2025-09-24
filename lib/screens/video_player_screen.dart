@@ -91,15 +91,18 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
 
       _showSnackBar("Downloading video...");
       
+      final downloadHeaders = Map<String, String>.from(widget.video.streamingHeaders);
+      downloadHeaders['Download-Request'] = 'true';
+      
       final response = await http.get(
         Uri.parse(widget.video.streamingUrl),
-        headers: widget.video.streamingHeaders,
+        headers: downloadHeaders,
       );
       
       if (response.statusCode == 200) {
         // First save to temporary file
         final directory = await getTemporaryDirectory();
-        final fileName = 'padel_video_${widget.video.id.substring(0, 8)}.mp4';
+        final fileName = 'video_${widget.video.id.substring(0, 8)}.mp4';
         final filePath = '${directory.path}/$fileName';
         final file = File(filePath);
         
@@ -108,7 +111,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
         // Then save to gallery
         final result = await ImageGallerySaverPlus.saveFile(
           filePath,
-          name: 'padel_video_${widget.video.id.substring(0, 8)}',
+          name: 'video_${widget.video.id.substring(0, 8)}',
         );
         
         setState(() {
