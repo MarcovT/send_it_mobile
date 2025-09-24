@@ -5,11 +5,13 @@ import '../models/video_data.dart';
 class VideoListItem extends StatelessWidget {
   final VideoData video;
   final VoidCallback onTap;
+  final bool isWatched;
   
   const VideoListItem({
     super.key,
     required this.video,
     required this.onTap,
+    this.isWatched = false,
   });
   
   @override
@@ -27,10 +29,10 @@ class VideoListItem extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: isWatched ? Colors.white : Colors.indigo.shade50,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: Colors.grey.shade200,
+            color: isWatched ? Colors.grey.shade200 : Colors.indigo.shade200,
             width: 1,
           ),
         ),
@@ -65,7 +67,7 @@ class VideoListItem extends StatelessWidget {
                   if (video.title.isNotEmpty) ...[
                     const SizedBox(height: 4),
                     Text(
-                      video.title.split('|').take(3).join('|').trim(),
+                      video.title.split('|').take(2).join('|').trim(),
                       style: TextStyle(
                         fontSize: 13,
                         color: Colors.grey.shade600,
@@ -111,11 +113,13 @@ class VideoListItem extends StatelessWidget {
 class VideoListItemWithThumbnail extends StatelessWidget {
   final VideoData video;
   final VoidCallback onTap;
+  final bool isWatched;
   
   const VideoListItemWithThumbnail({
     super.key,
     required this.video,
     required this.onTap,
+    this.isWatched = false,
   });
   
   @override
@@ -131,10 +135,10 @@ class VideoListItemWithThumbnail extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: isWatched ? Colors.white : Colors.indigo.shade50,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: Colors.grey.shade200,
+            color: isWatched ? Colors.grey.shade200 : Colors.indigo.shade200,
             width: 1,
           ),
         ),

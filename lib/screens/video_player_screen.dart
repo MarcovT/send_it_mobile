@@ -307,6 +307,14 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
     );
   }
 
+  String _formatDuration(Duration duration) {
+    String twoDigits(int n) => n.toString().padLeft(2, "0");
+    String twoDigitMinutes = twoDigits(duration.inMinutes.remainder(60));
+    String twoDigitSeconds = twoDigits(duration.inSeconds.remainder(60));
+    return "${twoDigits(duration.inHours)}:$twoDigitMinutes:$twoDigitSeconds";
+  }
+
+
   @override
   void dispose() {
     _controller?.dispose();
@@ -447,14 +455,39 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
               child: AnimatedOpacity(
                 opacity: _showControls || !_controller!.value.isPlaying ? 1.0 : 0.0,
                 duration: const Duration(milliseconds: 300),
-                child: VideoProgressIndicator(
-                  _controller!,
-                  allowScrubbing: true,
-                  colors: const VideoProgressColors(
-                    playedColor: Colors.blue,
-                    bufferedColor: Colors.grey,
-                    backgroundColor: Colors.black54,
-                  ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Time display
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          _formatDuration(_controller!.value.position),
+                          style: const TextStyle(color: Colors.white, fontSize: 12),
+                        ),
+                        Text(
+                          _formatDuration(_controller!.value.duration),
+                          style: const TextStyle(color: Colors.white, fontSize: 12),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    // Enhanced progress bar
+                    SizedBox(
+                      height: 30, // Increased height for easier touching
+                      child: VideoProgressIndicator(
+                        _controller!,
+                        allowScrubbing: true,
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        colors: const VideoProgressColors(
+                          playedColor: Colors.blue,
+                          bufferedColor: Colors.grey,
+                          backgroundColor: Colors.black54,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),

@@ -7,6 +7,7 @@ import '../models/clubs.dart';
 import '../models/court.dart';
 import '../models/video_data.dart';
 import '../services/api_service.dart';
+import '../services/watched_videos_service.dart';
 import '../widgets/video_list_item.dart';
 
 class CourtCalendarPage extends StatefulWidget {
@@ -31,12 +32,21 @@ class _CourtCalendarPageState extends State<CourtCalendarPage> {
   List<DateTime?> _selectedDates = [DateTime.now()];
   bool _isCalendarExpanded = true;
   final ScrollController _scrollController = ScrollController();
+  Set<String> _watchedVideoIds = {};
   
   @override
   void initState() {
     super.initState();
     _scrollController.addListener(_scrollListener);
+    _loadWatchedVideos();
     _fetchVideosForDate(_selectedDay);
+  }
+  
+  Future<void> _loadWatchedVideos() async {
+    final watchedVideos = await WatchedVideosService.instance.getWatchedVideos();
+    setState(() {
+      _watchedVideoIds = watchedVideos;
+    });
   }
   
   @override
@@ -509,13 +519,20 @@ class _CourtCalendarPageState extends State<CourtCalendarPage> {
                     
                     return VideoListItem(
                       video: video,
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => VideoPlayerScreen(video: video),
-                          ),
-                        );
+                      isWatched: _watchedVideoIds.contains(video.id),
+                      onTap: () async {
+                        final navigator = Navigator.of(context);
+                        await WatchedVideosService.instance.markVideoAsWatched(video.id);
+                        if (mounted) {
+                          setState(() {
+                            _watchedVideoIds.add(video.id);
+                          });
+                          navigator.push(
+                            MaterialPageRoute(
+                              builder: (context) => VideoPlayerScreen(video: video),
+                            ),
+                          );
+                        }
                       },
                     );
                   },
@@ -530,6 +547,7 @@ class _CourtCalendarPageState extends State<CourtCalendarPage> {
   }
 
   Future<void> _refreshVideos() async {
+    await _loadWatchedVideos();
     await _fetchVideosForDate(_selectedDay);
     
     if (_selectedTimePeriod != 'All Day') {
