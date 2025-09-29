@@ -1,5 +1,6 @@
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
 
 class VideoData {
   final String id;
@@ -64,6 +65,61 @@ class VideoData {
 
   // For use with video players that support custom headers
   Map<String, String> get streamingHeaders => headers;
+  
+  // Helper method to format title with localized date/time
+  String get formattedTitle {
+    if (title.isEmpty) return 'Video';
+    
+    // Split the title by pipe separator
+    final parts = title.split('|');
+    if (parts.length < 2) return title;
+    
+    // Try to parse and format any date/time components
+    final formattedParts = <String>[];
+    
+    for (final part in parts) {
+      final trimmedPart = part.trim();
+      if (trimmedPart.isEmpty) continue;
+      
+      // Try to parse as ISO date or common date formats
+      DateTime? parsedDate;
+      
+      // Try different date formats
+      final dateFormats = [
+        'yyyy-MM-ddTHH:mm:ss',
+        'yyyy-MM-ddTHH:mm:ssZ',
+        'yyyy-MM-dd HH:mm:ss',
+        'yyyy-MM-dd',
+        'dd/MM/yyyy HH:mm:ss',
+        'dd/MM/yyyy HH:mm',
+        'dd/MM/yyyy',
+        'MM/dd/yyyy HH:mm:ss',
+        'MM/dd/yyyy HH:mm',
+        'MM/dd/yyyy',
+      ];
+      
+      for (final format in dateFormats) {
+        try {
+          parsedDate = DateFormat(format).parse(trimmedPart);
+          break;
+        } catch (e) {
+          // Continue trying other formats
+        }
+      }
+      
+      // If we successfully parsed a date, format it locally
+      if (parsedDate != null) {
+        final localDate = parsedDate.toLocal();
+        final localFormat = DateFormat('MMM dd, yyyy \'at\' HH:mm').format(localDate);
+        formattedParts.add(localFormat);
+      } else {
+        // Keep the original part if it's not a date
+        formattedParts.add(trimmedPart);
+      }
+    }
+    
+    return formattedParts.join(' | ');
+  }
   
   // Factory constructor to create VideoData from API JSON
   factory VideoData.fromJson(Map<String, dynamic> json) {

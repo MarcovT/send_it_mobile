@@ -329,7 +329,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
         backgroundColor: Colors.black,
         iconTheme: const IconThemeData(color: Colors.white),
         title: Text(
-          widget.video.title,
+          widget.video.formattedTitle,
           style: const TextStyle(color: Colors.white, fontSize: 16),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
@@ -475,7 +475,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                     const SizedBox(height: 8),
                     // Enhanced progress bar
                     SizedBox(
-                      height: 30, // Increased height for easier touching
+                      height: 35, // Increased height for easier touching
                       child: VideoProgressIndicator(
                         _controller!,
                         allowScrubbing: true,
