@@ -14,8 +14,10 @@ class LauncherScreen extends StatefulWidget {
 class _LauncherScreenState extends State<LauncherScreen> with TickerProviderStateMixin {
   late AnimationController _fadeController;
   late AnimationController _scaleController;
+  late AnimationController _bounceOutController;
   late Animation<double> _fadeAnimation;
   late Animation<double> _scaleAnimation;
+  late Animation<double> _bounceOutAnimation;
 
   @override
   void initState() {
@@ -28,6 +30,11 @@ class _LauncherScreenState extends State<LauncherScreen> with TickerProviderStat
     
     _scaleController = AnimationController(
       duration: const Duration(milliseconds: 500),
+      vsync: this,
+    );
+    
+    _bounceOutController = AnimationController(
+      duration: const Duration(milliseconds: 600),
       vsync: this,
     );
 
@@ -47,6 +54,14 @@ class _LauncherScreenState extends State<LauncherScreen> with TickerProviderStat
       curve: Curves.elasticOut,
     ));
 
+    _bounceOutAnimation = Tween<double>(
+      begin: 1.0,
+      end: 0.0,
+    ).animate(CurvedAnimation(
+      parent: _bounceOutController,
+      curve: Curves.elasticIn,
+    ));
+
     _startAnimation();
   }
 
@@ -64,8 +79,14 @@ class _LauncherScreenState extends State<LauncherScreen> with TickerProviderStat
     await Future.delayed(const Duration(milliseconds: 200));
     _scaleController.forward();
     
-    // Wait for total duration then navigate
+    // Wait for total duration then start bounce-out animation
     await Future.delayed(const Duration(milliseconds: 2500));
+    
+    // Start bounce-out animation
+    _bounceOutController.forward();
+    
+    // Wait for bounce-out to complete then navigate
+    await Future.delayed(const Duration(milliseconds: 600));
     _navigateToHome();
   }
 
@@ -91,6 +112,7 @@ class _LauncherScreenState extends State<LauncherScreen> with TickerProviderStat
   void dispose() {
     _fadeController.dispose();
     _scaleController.dispose();
+    _bounceOutController.dispose();
     super.dispose();
   }
 
@@ -116,10 +138,16 @@ class _LauncherScreenState extends State<LauncherScreen> with TickerProviderStat
               children: [
                 // Logo/Icon Section
                 AnimatedBuilder(
-                  animation: _scaleAnimation,
+                  animation: Listenable.merge([_scaleAnimation, _bounceOutAnimation]),
                   builder: (context, child) {
+                    // Combine scale-in and bounce-out effects
+                    double combinedScale = _scaleAnimation.value;
+                    if (_bounceOutController.isAnimating || _bounceOutController.isCompleted) {
+                      combinedScale *= _bounceOutAnimation.value;
+                    }
+                    
                     return Transform.scale(
-                      scale: _scaleAnimation.value,
+                      scale: combinedScale,
                       child: Container(
                         width: 120,
                         height: 120,
