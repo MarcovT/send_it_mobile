@@ -1,24 +1,36 @@
 import 'dart:convert';
+import 'dart:io';
+import 'dart:async';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter/foundation.dart';
 import '../models/clubs.dart';
 import '../models/court.dart';
 import '../models/video_data.dart';
+import '../exceptions/app_exceptions.dart';
 
 class ApiService {
   // Use environment variables for sensitive data - no fallbacks for security
   static String get baseUrl {
     final url = dotenv.env['BASE_URL'];
     if (url == null || url.isEmpty) {
-      throw Exception('BASE_URL not found in environment variables. Please check your .env file.');
+      if (kDebugMode) {
+        throw Exception('BASE_URL not found in environment variables. Please check your .env file.');
+      } else {
+        throw const DataException('Configuration error. Please contact support.');
+      }
     }
     return url;
   }
-  
+
   static String get apiSecret {
     final secret = dotenv.env['API_SECRET'];
     if (secret == null || secret.isEmpty) {
-      throw Exception('API_SECRET not found in environment variables. Please check your .env file.');
+      if (kDebugMode) {
+        throw Exception('API_SECRET not found in environment variables. Please check your .env file.');
+      } else {
+        throw const DataException('Configuration error. Please contact support.');
+      }
     }
     return secret;
   }
@@ -36,22 +48,38 @@ class ApiService {
       final response = await http.get(
         Uri.parse('$baseUrl/clubs/nearby/$latitude/$longitude/10'),
         headers: _headers,
-      );
-      
+      ).timeout(const Duration(seconds: 30));
+
       if (response.statusCode == 200) {
-        // Decode the JSON once
-        final Map<String, dynamic> decodedResponse = json.decode(response.body);
-        
-        // Access the results array
-        final List<dynamic> results = decodedResponse['results'];
-        
-        // Map the results to Club objects
-        return results.map((json) => _parseClubs(json)).toList();
+        try {
+          // Decode the JSON once
+          final Map<String, dynamic> decodedResponse = json.decode(response.body);
+
+          // Access the results array
+          final List<dynamic> results = decodedResponse['results'];
+
+          // Map the results to Club objects
+          return results.map((json) => _parseClubs(json)).toList();
+        } catch (e) {
+          throw DataException.parsing('clubs data');
+        }
+      } else if (response.statusCode == 404) {
+        throw ClubException.notFound();
+      } else if (response.statusCode == 401) {
+        throw NetworkException.unauthorized();
+      } else if (response.statusCode >= 500) {
+        throw NetworkException.serverError(response.statusCode);
       } else {
-        throw Exception('Failed to load nearby clubs: ${response.statusCode}');
+        throw NetworkException('Failed to load clubs', statusCode: response.statusCode);
       }
+    } on SocketException {
+      throw NetworkException.noInternet();
+    } on TimeoutException {
+      throw NetworkException.timeout();
+    } on AppException {
+      rethrow; // Re-throw our custom exceptions
     } catch (e) {
-      throw Exception('Unable to connect. Please check your internet connection and try again.');
+      throw ClubException.loadFailed();
     }
   }
  
@@ -144,45 +172,72 @@ class ApiService {
   }
 
   static Future<List<VideoData>> fetchCourtVideos(String courtId, String dateString) async {
+    // Validate inputs
+    if (courtId.isEmpty) {
+      throw const DataException('Court ID cannot be empty');
+    }
+    if (!RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(dateString)) {
+      throw DataException.validation('date format (expected YYYY-MM-DD)');
+    }
+
     try {
       // Build the correct URL based on your Postman example
       final String url = '$baseUrl/courts/videos/$courtId/$dateString';
-      
+
       final response = await http.get(
         Uri.parse(url),
         headers: _headers,
-      );
+      ).timeout(const Duration(seconds: 30));
 
       if (response.statusCode == 200) {
-        final Map<String, dynamic> jsonResponse = json.decode(response.body);
-        
-        // Check if the response has the expected structure
-        if (jsonResponse['status'] == 'success' && jsonResponse['results'] != null) {
-          final List<dynamic> videosJson = jsonResponse['results'];
-          
-          // Convert each video JSON to VideoData object with error handling
-          List<VideoData> videos = [];
-          
-          for (int i = 0; i < videosJson.length; i++) {
-            try {
-              final videoJson = videosJson[i];
-            
-              final video = VideoData.fromJson(videoJson);
-              videos.add(video);
-            } catch (e) {
-              throw Exception('Unable to connect. Please check your internet connection and try again.');
+        try {
+          final Map<String, dynamic> jsonResponse = json.decode(response.body);
+
+          // Check if the response has the expected structure
+          if (jsonResponse['status'] == 'success' && jsonResponse['results'] != null) {
+            final List<dynamic> videosJson = jsonResponse['results'];
+
+            // Convert each video JSON to VideoData object with error handling
+            List<VideoData> videos = [];
+
+            for (int i = 0; i < videosJson.length; i++) {
+              try {
+                final videoJson = videosJson[i];
+                final video = VideoData.fromJson(videoJson);
+                videos.add(video);
+              } catch (e) {
+                // Skip malformed videos but continue processing
+                if (kDebugMode) {
+                  print('Warning: Failed to parse video at index $i: $e');
+                }
+              }
             }
+
+            return videos;
+          } else {
+            return [];
           }
-          
-          return videos;
-        } else {
-          return [];
+        } catch (e) {
+          throw DataException.parsing('video data');
         }
+      } else if (response.statusCode == 404) {
+        // No videos found for this date - return empty list
+        return [];
+      } else if (response.statusCode == 401) {
+        throw NetworkException.unauthorized();
+      } else if (response.statusCode >= 500) {
+        throw NetworkException.serverError(response.statusCode);
       } else {
-        throw Exception('Failed to load videos: ${response.statusCode}');
+        throw NetworkException('Failed to load videos', statusCode: response.statusCode);
       }
+    } on SocketException {
+      throw NetworkException.noInternet();
+    } on TimeoutException {
+      throw NetworkException.timeout();
+    } on AppException {
+      rethrow; // Re-throw our custom exceptions
     } catch (e) {
-      throw Exception('Unable to connect. Please check your internet connection and try again.');
+      throw VideoException.loadFailed();
     }
   }
 

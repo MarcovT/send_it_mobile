@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:intl/intl.dart';
-import 'package:send_it/screens/video_player_screen.dart';
+import 'package:send_it/screens/swipeable_video_player_screen.dart';
 import 'package:calendar_date_picker2/calendar_date_picker2.dart';
 import '../models/clubs.dart';
 import '../models/court.dart';
@@ -529,9 +529,15 @@ class _CourtCalendarPageState extends State<CourtCalendarPage> {
                           });
                           navigator.push(
                             MaterialPageRoute(
-                              builder: (context) => VideoPlayerScreen(video: video),
+                              builder: (context) => SwipeableVideoPlayerScreen(
+                                videos: _videos,
+                                initialIndex: index,
+                              ),
                             ),
-                          );
+                          ).then((_) {
+                            // Refresh watched videos when returning from player
+                            _loadWatchedVideos();
+                          });
                         }
                       },
                     );

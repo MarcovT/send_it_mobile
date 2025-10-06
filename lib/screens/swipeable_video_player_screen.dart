@@ -3,80 +3,151 @@ import 'package:video_player/video_player.dart';
 import 'package:http/http.dart' as http;
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
+import 'package:intl/intl.dart';
 import '../models/video_data.dart';
 import '../services/api_service.dart';
+import '../services/watched_videos_service.dart';
+import '../services/video_controller_manager.dart';
 import 'package:image_gallery_saver_plus/image_gallery_saver_plus.dart';
 
-class VideoPlayerScreen extends StatefulWidget {
-  final VideoData video;
-  
-  const VideoPlayerScreen({
+class SwipeableVideoPlayerScreen extends StatefulWidget {
+  final List<VideoData> videos;
+  final int initialIndex;
+
+  const SwipeableVideoPlayerScreen({
     super.key,
-    required this.video,
+    required this.videos,
+    required this.initialIndex,
   });
 
   @override
-  State<VideoPlayerScreen> createState() => _VideoPlayerScreenState();
+  State<SwipeableVideoPlayerScreen> createState() => _SwipeableVideoPlayerScreenState();
 }
 
-class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
-  VideoPlayerController? _controller;
-  bool _isLoading = true;
-  bool _hasError = false;
-  bool _showControls = false;
+class _SwipeableVideoPlayerScreenState extends State<SwipeableVideoPlayerScreen> {
+  late PageController _pageController;
+  late int _currentIndex;
+  late VideoControllerManager _controllerManager;
+  final Map<int, bool> _isLoading = {};
+  final Map<int, bool> _hasError = {};
+  final Map<int, bool> _showControls = {};
   bool _isDownloading = false;
   bool _isSubmittingDeleteRequest = false;
 
   @override
   void initState() {
     super.initState();
-    _initializeVideoPlayer();
+    _currentIndex = widget.initialIndex;
+    _pageController = PageController(initialPage: widget.initialIndex);
+    _controllerManager = VideoControllerManager(maxCached: 5);
+
+    // Initialize the current video
+    _initializeVideoAtIndex(_currentIndex);
+
+    // Mark the initial video as watched
+    _markCurrentVideoAsWatched();
   }
 
-  Future<void> _initializeVideoPlayer() async {
+  Future<void> _initializeVideoAtIndex(int index) async {
+    if (index < 0 || index >= widget.videos.length) return;
+    if (_controllerManager.contains(index)) return; // Already initialized
+
+    setState(() {
+      _isLoading[index] = true;
+      _hasError[index] = false;
+      _showControls[index] = false;
+    });
+
     try {
-      final videoUrl = widget.video.streamingUrl;
-      
-      _controller = VideoPlayerController.networkUrl(Uri.parse(videoUrl),
-        httpHeaders: widget.video.streamingHeaders);
-      await _controller!.initialize();
-      
-      setState(() {
-        _isLoading = false;
-      });
-      
-      _controller!.play();
-      
+      final video = widget.videos[index];
+      final controller = await _controllerManager.initialize(index, video);
+
+      if (mounted) {
+        setState(() {
+          _isLoading[index] = false;
+        });
+
+        // Auto-play if it's the current video
+        if (index == _currentIndex) {
+          controller.play();
+        }
+      }
     } catch (e) {
-      setState(() {
-        _isLoading = false;
-        _hasError = true;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading[index] = false;
+          _hasError[index] = true;
+        });
+      }
     }
   }
 
-  void _togglePlayPause() {
-    if (_controller != null && _controller!.value.isInitialized) {
+  void _onPageChanged(int index) {
+    // Pause the previous video
+    final previousController = _controllerManager.get(_currentIndex);
+    if (previousController != null) {
+      previousController.pause();
+    }
+
+    setState(() {
+      _currentIndex = index;
+    });
+
+    // Mark the new video as watched
+    _markCurrentVideoAsWatched();
+
+    // Initialize and play the new video
+    final currentController = _controllerManager.get(index);
+    if (currentController != null && currentController.value.isInitialized) {
+      currentController.play();
+    } else {
+      _initializeVideoAtIndex(index);
+    }
+
+    // Pre-load adjacent videos
+    _preloadAdjacentVideos(index);
+  }
+
+  void _preloadAdjacentVideos(int currentIndex) {
+    // Pre-load next video
+    if (currentIndex + 1 < widget.videos.length) {
+      _initializeVideoAtIndex(currentIndex + 1);
+    }
+
+    // Pre-load previous video
+    if (currentIndex - 1 >= 0) {
+      _initializeVideoAtIndex(currentIndex - 1);
+    }
+  }
+
+  Future<void> _markCurrentVideoAsWatched() async {
+    final videoId = widget.videos[_currentIndex].id;
+    await WatchedVideosService.instance.markVideoAsWatched(videoId);
+  }
+
+  void _togglePlayPause(int index) {
+    final controller = _controllerManager.get(index);
+    if (controller != null && controller.value.isInitialized) {
       setState(() {
-        if (_controller!.value.isPlaying) {
-          _controller!.pause();
+        if (controller.value.isPlaying) {
+          controller.pause();
         } else {
-          _controller!.play();
+          controller.play();
         }
       });
     }
   }
 
-  void _toggleControls() {
+  void _toggleControls(int index) {
     setState(() {
-      _showControls = !_showControls;
+      _showControls[index] = !(_showControls[index] ?? false);
     });
-    
-    if (_showControls) {
+
+    if (_showControls[index] == true) {
       Future.delayed(const Duration(seconds: 3), () {
         if (mounted) {
           setState(() {
-            _showControls = false;
+            _showControls[index] = false;
           });
         }
       });
@@ -90,41 +161,40 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
       });
 
       _showSnackBar("Downloading video...");
-      
-      final downloadHeaders = Map<String, String>.from(widget.video.streamingHeaders);
+
+      final video = widget.videos[_currentIndex];
+      final downloadHeaders = Map<String, String>.from(video.streamingHeaders);
       downloadHeaders['Download-Request'] = 'true';
-      
+
       final response = await http.get(
-        Uri.parse(widget.video.streamingUrl),
+        Uri.parse(video.streamingUrl),
         headers: downloadHeaders,
       );
-      
+
       if (response.statusCode == 200) {
-        // First save to temporary file
         final directory = await getTemporaryDirectory();
-        final fileName = 'video_${widget.video.id.substring(0, 8)}.mp4';
+        final fileName = 'video_${video.id.substring(0, 8)}.mp4';
         final filePath = '${directory.path}/$fileName';
         final file = File(filePath);
-        
+
         await file.writeAsBytes(response.bodyBytes);
-        
-        // Then save to gallery
+
         final result = await ImageGallerySaverPlus.saveFile(
           filePath,
-          name: 'video_${widget.video.id.substring(0, 8)}',
+          name: 'video_${video.id.substring(0, 8)}',
         );
-        
+
         setState(() {
           _isDownloading = false;
         });
-        
+
         if (result['isSuccess']) {
           _showSnackBar("Video saved!");
         } else {
           throw Exception('Failed to save video');
         }
       } else {
-        throw Exception('Failed to download video please make sure you are connected to the internet or try again later.');
+        throw Exception('Failed to download video');
       }
     } catch (e) {
       setState(() {
@@ -139,9 +209,10 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
       _isSubmittingDeleteRequest = true;
     });
 
+    final video = widget.videos[_currentIndex];
     final success = await ApiService.submitVideoDeleteRequest(
-      videoId: widget.video.id,
-      videoTitle: widget.video.title,
+      videoId: video.id,
+      videoTitle: video.title,
       name: name,
       surname: surname,
       email: email,
@@ -151,11 +222,11 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
       _isSubmittingDeleteRequest = false;
     });
 
-     if (success) {
+    if (success) {
       _showSnackBar("Delete request submitted successfully");
-     } else {
-       _showSnackBar("Failed to submit delete request. Please try again later.");
-     }
+    } else {
+      _showSnackBar("Failed to submit delete request. Please try again later.");
+    }
   }
 
   void _showDeleteRequestForm() {
@@ -314,25 +385,38 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
     return "${twoDigits(duration.inHours)}:$twoDigitMinutes:$twoDigitSeconds";
   }
 
-
   @override
   void dispose() {
-    _controller?.dispose();
+    _pageController.dispose();
+    _controllerManager.disposeAll();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final currentVideo = widget.videos[_currentIndex];
+
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
         backgroundColor: Colors.black,
         iconTheme: const IconThemeData(color: Colors.white),
-        title: Text(
-          widget.video.formattedTitle,
-          style: const TextStyle(color: Colors.white, fontSize: 16),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              currentVideo.createdAt != null
+                  ? 'Time: ${DateFormat('HH:mm').format(currentVideo.createdAt!.toLocal())}'
+                  : 'Time: All Day',
+              style: const TextStyle(color: Colors.white, fontSize: 16),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            Text(
+              'Video ${_currentIndex + 1} of ${widget.videos.length}',
+              style: const TextStyle(color: Colors.grey, fontSize: 12),
+            ),
+          ],
         ),
         actions: [
           IconButton(
@@ -343,8 +427,49 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
       ),
       body: Stack(
         children: [
-          Center(child: _buildVideoPlayer()),
+          PageView.builder(
+            controller: _pageController,
+            onPageChanged: _onPageChanged,
+            itemCount: widget.videos.length,
+            itemBuilder: (context, index) {
+              return _buildVideoPlayerPage(index);
+            },
+          ),
           if (_isDownloading) _buildDownloadingOverlay(),
+
+          // Swipe indicator hints
+          if (_currentIndex > 0)
+            Positioned(
+              left: 0,
+              top: 0,
+              bottom: 0,
+              width: 60,
+              child: Container(
+                alignment: Alignment.centerLeft,
+                padding: const EdgeInsets.only(left: 8),
+                child: Icon(
+                  Icons.chevron_left,
+                  color: Colors.white.withValues(alpha: 0.3),
+                  size: 40,
+                ),
+              ),
+            ),
+          if (_currentIndex < widget.videos.length - 1)
+            Positioned(
+              right: 0,
+              top: 0,
+              bottom: 0,
+              width: 60,
+              child: Container(
+                alignment: Alignment.centerRight,
+                padding: const EdgeInsets.only(right: 8),
+                child: Icon(
+                  Icons.chevron_right,
+                  color: Colors.white.withValues(alpha: 0.3),
+                  size: 40,
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -374,23 +499,29 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
     );
   }
 
+  Widget _buildVideoPlayerPage(int index) {
+    final isLoading = _isLoading[index] ?? true;
+    final hasError = _hasError[index] ?? false;
+    final controller = _controllerManager.get(index);
+    final showControls = _showControls[index] ?? false;
 
-  Widget _buildVideoPlayer() {
-    if (_isLoading) {
-      return const Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          CircularProgressIndicator(color: Colors.blue),
-          SizedBox(height: 16),
-          Text(
-            'Loading your padel video...',
-            style: TextStyle(color: Colors.white, fontSize: 16),
-          ),
-        ],
+    if (isLoading) {
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(color: Colors.blue),
+            SizedBox(height: 16),
+            Text(
+              'Loading your padel video...',
+              style: TextStyle(color: Colors.white, fontSize: 16),
+            ),
+          ],
+        ),
       );
     }
 
-    if (_hasError) {
+    if (hasError) {
       return Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -403,15 +534,19 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
               style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
-            Text("Please make sure you are connected to the internet and try again. If the problem persists, please submit an issue.", style: const TextStyle(color: Colors.grey, fontSize: 14)),
+            const Text(
+              "Please make sure you are connected to the internet and try again.",
+              style: TextStyle(color: Colors.grey, fontSize: 14),
+              textAlign: TextAlign.center,
+            ),
             const SizedBox(height: 16),
             ElevatedButton.icon(
               onPressed: () {
                 setState(() {
-                  _isLoading = true;
-                  _hasError = false;
+                  _isLoading[index] = true;
+                  _hasError[index] = false;
                 });
-                _initializeVideoPlayer();
+                _initializeVideoAtIndex(index);
               },
               icon: const Icon(Icons.refresh),
               label: const Text('Retry'),
@@ -421,63 +556,61 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
       );
     }
 
-    if (_controller != null && _controller!.value.isInitialized) {
+    if (controller != null && controller.value.isInitialized) {
       return GestureDetector(
-        onTap: _toggleControls,
+        onTap: () => _toggleControls(index),
         child: Stack(
           children: [
             Center(
               child: AspectRatio(
-                aspectRatio: _controller!.value.aspectRatio,
-                child: VideoPlayer(_controller!),
+                aspectRatio: controller.value.aspectRatio,
+                child: VideoPlayer(controller),
               ),
             ),
-            
-            if (_showControls || !_controller!.value.isPlaying)
+
+            if (showControls || !controller.value.isPlaying)
               Container(
                 color: Colors.black26,
                 child: Center(
                   child: IconButton(
-                    onPressed: _togglePlayPause,
+                    onPressed: () => _togglePlayPause(index),
                     icon: Icon(
-                      _controller!.value.isPlaying ? Icons.pause_circle_filled : Icons.play_circle_filled,
+                      controller.value.isPlaying ? Icons.pause_circle_filled : Icons.play_circle_filled,
                       color: Colors.white,
                       size: 64,
                     ),
                   ),
                 ),
               ),
-            
+
             Positioned(
               bottom: 20,
               left: 20,
               right: 20,
               child: AnimatedOpacity(
-                opacity: _showControls || !_controller!.value.isPlaying ? 1.0 : 0.0,
+                opacity: showControls || !controller.value.isPlaying ? 1.0 : 0.0,
                 duration: const Duration(milliseconds: 300),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Time display
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          _formatDuration(_controller!.value.position),
+                          _formatDuration(controller.value.position),
                           style: const TextStyle(color: Colors.white, fontSize: 12),
                         ),
                         Text(
-                          _formatDuration(_controller!.value.duration),
+                          _formatDuration(controller.value.duration),
                           style: const TextStyle(color: Colors.white, fontSize: 12),
                         ),
                       ],
                     ),
                     const SizedBox(height: 8),
-                    // Enhanced progress bar
                     SizedBox(
-                      height: 35, // Increased height for easier touching
+                      height: 35,
                       child: VideoProgressIndicator(
-                        _controller!,
+                        controller,
                         allowScrubbing: true,
                         padding: const EdgeInsets.symmetric(vertical: 8),
                         colors: const VideoProgressColors(
@@ -496,6 +629,8 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
       );
     }
 
-    return const Text('Video failed to initialize', style: TextStyle(color: Colors.white));
+    return const Center(
+      child: Text('Video failed to initialize', style: TextStyle(color: Colors.white)),
+    );
   }
 }

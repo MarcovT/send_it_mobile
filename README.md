@@ -26,22 +26,37 @@ SEND-IT Replays is a Flutter mobile application that connects players to their r
 
 ### Court Calendar Page (`lib/screens/court_calendar_page.dart`)
 - **Date Picker**: Calendar interface to select game dates
-- **Video Availability**: Shows which dates have recorded content
-- **Video Navigation**: Direct access to videos for selected dates
+- **Time Filtering**: Filter videos by Morning, Afternoon, Evening, or All Day
+- **Video List**: Browse available videos with timestamps
+- **Watched Status Tracking**: Visual indicators for videos already viewed (color-coded cards)
+- **Collapsible Calendar**: Expandable/collapsible calendar view for better screen space management
 
-### Video Player Screen (`lib/screens/video_player_screen.dart`)
-- **Video Playback**: Full-screen video player with standard controls
+### Swipeable Video Player Screen (`lib/screens/swipeable_video_player_screen.dart`)
+- **Swipeable Navigation**: Swipe left/right to browse through videos seamlessly
+- **Smart Pre-loading**: Adjacent videos are pre-loaded for smooth transitions
+- **Auto-Play**: Videos automatically play when swiped to
+- **Video Controls**: Play/pause, seek, and progress tracking
 - **Download Feature**: Save videos directly to device photo library
-- **Video Metadata**: Display game information and timestamps
+- **Delete Requests**: Submit requests to remove videos from the system
+- **Position Indicator**: Shows current video position (e.g., "Video 3 of 10")
+- **Time Display**: Shows video timestamp in the app bar
+- **Watched Tracking**: Automatically marks videos as watched when viewed
 
 ## Critical Configuration Files
 
-### API Service
+### Services
 - **`lib/services/api_service.dart`**: Core API communication layer
   - Club discovery endpoints
-  - Court listing functionality  
+  - Court listing functionality
   - Video retrieval methods
+  - Video delete request submission
   - Authentication headers
+
+- **`lib/services/watched_videos_service.dart`**: Video tracking service
+  - Tracks which videos users have watched
+  - Persists watched state using SharedPreferences
+  - Auto-cleanup of old entries (14-day retention)
+  - Migration support for legacy data
 
 ### App Configuration
 - **`pubspec.yaml`**: Dependencies and app metadata
@@ -84,11 +99,14 @@ flutter build ios --release
 ## Key Dependencies
 
 - **http**: API communication
-- **geolocator**: Location services
-- **video_player**: Video playback functionality
-- **image_gallery_saver_plus**: Video downloads
-- **flutter_dotenv**: Environment variable management
-- **shared_preferences**: Local data persistence
+- **geolocator**: Location services and nearby club discovery
+- **video_player**: Video playback functionality with network streaming support
+- **image_gallery_saver_plus**: Video downloads to device gallery
+- **flutter_dotenv**: Environment variable management for API credentials
+- **shared_preferences**: Local data persistence for watched videos
+- **calendar_date_picker2**: Interactive calendar widget for date selection
+- **intl**: Internationalization and date/time formatting
+- **path_provider**: Access to device storage directories
 
 ## Security Notes
 
@@ -104,6 +122,17 @@ flutter build ios --release
 3. **Dependencies**: Add to `pubspec.yaml` and run `flutter pub get`
 4. **Environment**: Update `.env` for API configuration changes
 5. **Testing**: Use `flutter run` for development, test on real devices for location/video features
+
+## Recent Updates
+
+### Swipeable Video Player (Latest)
+- Replaced single video player with swipeable multi-video player
+- Users can now swipe left/right to navigate between videos without returning to the list
+- Smart pre-loading of adjacent videos for seamless transitions
+- Automatic watched video tracking with visual indicators in video list
+- Videos marked as watched have white background; unwatched videos have colored (indigo) background
+- Position indicator shows current video number (e.g., "Video 3 of 10")
+- Time display in app bar shows when the video was recorded
 
 ---
 
