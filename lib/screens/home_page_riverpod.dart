@@ -64,6 +64,7 @@ class _HomePageState extends ConsumerState<HomePage> {
       barrierDismissible: false,
       builder: (context) => TermsConditionsDialog(
         onAccept: () {
+          Navigator.of(context).pop(); // Close the dialog first
           setState(() {
             _termsAccepted = true;
           });
