@@ -63,8 +63,9 @@ class _HomePageState extends ConsumerState<HomePage> {
       context: context,
       barrierDismissible: false,
       builder: (context) => TermsConditionsDialog(
-        onAccept: () {
+        onAccept: () async {
           Navigator.of(context).pop(); // Close the dialog first
+          await TermsService.acceptTerms(); // Save acceptance to SharedPreferences
           setState(() {
             _termsAccepted = true;
           });
@@ -209,9 +210,44 @@ class _HomePageState extends ConsumerState<HomePage> {
     }
 
     if (!_termsAccepted) {
-      return const Scaffold(
+      return Scaffold(
         body: Center(
-          child: Text('Please accept terms and conditions to continue.'),
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.description_outlined,
+                  size: 64,
+                  color: Colors.grey.shade400,
+                ),
+                const SizedBox(height: 24),
+                Text(
+                  'Please accept terms and conditions to continue.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.grey.shade700,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                ElevatedButton.icon(
+                  onPressed: _showTermsDialog,
+                  icon: const Icon(Icons.article),
+                  label: const Text('Review Terms & Conditions'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.indigo,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 12,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       );
     }
