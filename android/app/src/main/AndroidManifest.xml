@@ -2,16 +2,17 @@
 
     <!--Internet connectivity-->
     <uses-permission android:name="android.permission.INTERNET"/>
-    
+
     <!-- Location permissions -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
-    <!-- Storage permissions -->
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
-    
+    <!-- Storage permissions for Android 9 and below only -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28" />
+
     <!-- Optional: Only required when accessing location in the background -->
     <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
 
