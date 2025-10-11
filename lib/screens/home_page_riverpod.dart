@@ -362,54 +362,52 @@ class _HomePageState extends ConsumerState<HomePage> {
       );
     }
 
-    if (clubsState.displayedClubs.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.search_off,
-              size: 64,
-              color: Colors.grey.shade400,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              _searchQuery.isNotEmpty
-                  ? 'No clubs found for "$_searchQuery"'
-                  : 'No clubs available',
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey.shade600,
-              ),
-            ),
-            if (_searchQuery.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              TextButton(
-                onPressed: _stopSearch,
-                child: const Text('Clear search'),
-              ),
-            ],
-          ],
-        ),
-      );
-    }
-
     return Column(
       children: [
         _buildLocationToggle(clubsState),
         Expanded(
-          child: ListView.builder(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            itemCount: clubsState.displayedClubs.length,
-            itemBuilder: (context, index) {
-              final club = clubsState.displayedClubs[index];
-              return ClubListItem(
-                key: ValueKey(club.id),
-                club: club,
-                onTap: () => _navigateToClub(club),
-              );
-            },
-          ),
+          child: clubsState.displayedClubs.isEmpty
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.search_off,
+                        size: 64,
+                        color: Colors.grey.shade400,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        _searchQuery.isNotEmpty
+                            ? 'No clubs found for "$_searchQuery"'
+                            : 'No clubs available',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
+                      if (_searchQuery.isNotEmpty) ...[
+                        const SizedBox(height: 8),
+                        TextButton(
+                          onPressed: _stopSearch,
+                          child: const Text('Clear search'),
+                        ),
+                      ],
+                    ],
+                  ),
+                )
+              : ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  itemCount: clubsState.displayedClubs.length,
+                  itemBuilder: (context, index) {
+                    final club = clubsState.displayedClubs[index];
+                    return ClubListItem(
+                      key: ValueKey(club.id),
+                      club: club,
+                      onTap: () => _navigateToClub(club),
+                    );
+                  },
+                ),
         ),
       ],
     );

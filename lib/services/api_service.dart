@@ -46,7 +46,7 @@ class ApiService {
   static Future<List<Club>> fetchNearbyClubsAll(double latitude, double longitude) async {
     try {
       final response = await http.get(
-        Uri.parse('$baseUrl/clubs/nearby/$latitude/$longitude/10'),
+        Uri.parse('$baseUrl/clubs/nearby/$latitude/$longitude/50'),
         headers: _headers,
       ).timeout(const Duration(seconds: 30));
 
